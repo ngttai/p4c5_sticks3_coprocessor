@@ -57,7 +57,7 @@ static const char *TAG = "afe_s3";
  * afe_perferred_core không có tác dụng; muốn AFE nằm trên core 1 thì phải ghim hai task feed/fetch vào core 1. */
 #define AFE_CORE 1
 
-/* TEST_MODE 1 = tone 1 kHz, 2 = giọng nói tổng hợp (flite) lặp lại */
+/* TEST_MODE 1 = tone 1 kHz, 2 = giọng nói tổng hợp (flite) lặp lại, 3 = double-talk (mỗi vòng chờ nhấn KEY1, in "ALL DONE" khi xong) */
 #define TEST_MODE  3
 #if TEST_MODE == 3
 /* double-talk: 0-1 s im, 1-2 s ba tiếng bip báo vòng mới, 3-16 s phát giọng far-end,

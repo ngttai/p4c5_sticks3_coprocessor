@@ -60,7 +60,7 @@ cd host_p4  && idf.py set-target esp32p4 && idf.py build   # P4, bản thử
 cd phone_s3 && idf.py set-target esp32p4 && idf.py build   # P4, bản phone
 ```
 
-`sdkconfig` được sinh từ `sdkconfig.defaults*` và không nằm trong git. Nạp: `idf.py -p <cổng> flash` (S3 và P4 là hai cổng USB-Serial/JTAG khác nhau; mở cổng serial reset board).
+`sdkconfig` được sinh từ `sdkconfig.defaults*` và không nằm trong git. Nạp: `idf.py -p <cổng> flash` (S3 và P4 là hai cổng USB-Serial/JTAG khác nhau; nạp hoặc monitor có thể reset board).
 
 ## Ghi chú
 

@@ -77,7 +77,7 @@ CONFIG_BOOTLOADER_LOG_LEVEL_INFO=n
 CONFIG_BOOTLOADER_LOG_LEVEL_WARN=y
 
 # Wi-Fi through an ESP32-S3 (StickS3) co-processor: ESP-Hosted 3.1 over SPI full-duplex on JP1.
-# The S3 runs ../sticks3_coprocessor/cp_s3 (WiFi + AFE + I2S audio link).
+# The S3 runs ../cp_s3 (WiFi + AFE + I2S audio link).
 CONFIG_ESP_WIFI_REMOTE_LIBRARY_HOSTED=y
 CONFIG_ESP_HOSTED_CP_TARGET_FROM_WIFI_REMOTE=n
 CONFIG_SLAVE_IDF_TARGET_ESP32S3=y

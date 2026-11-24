@@ -82,5 +82,5 @@ LCD G38 đến G41, G21 và G45; I2C của IMU và PMIC G47 và G48; ES8311 G14 
 
 - Dây ngắn, dưới 10 cm; nên có GND xen kẽ với đường SPI. SPI ở cả hai phía đi qua GPIO matrix nên giới hạn xung: 26 MHz ổn định, 40 MHz không ổn định.
 - **G3 là chân strapping** của S3. P4 nên để GPIO49 ở high-Z cho đến khi S3 chạy xong; khung playback chỉ hợp lệ khi có magic `0xA55A` ở kênh R (xem [I2S_LINK.md](I2S_LINK.md)).
-- Mở cổng serial của P4 làm reset P4 và, qua GPIO50, cả S3.
+- Reset P4 (kể cả do công cụ nạp hoặc monitor kéo DTR/RTS) cũng reset S3 qua GPIO50. Khi ghi log, mở cổng không kéo DTR/RTS (xem [../tools/README.md](../tools/README.md)).
 - Kiểm tra mức 3,3 V của GPIO26 đến 30 và 45 đến 50 trên P4C5 (qua điện trở 100 Ω) và StickS3.

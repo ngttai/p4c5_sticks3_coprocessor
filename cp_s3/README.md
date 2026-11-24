@@ -1,79 +1,24 @@
-# Wi-Fi iperf — Coprocessor
+# cp_s3
 
-Wi-Fi throughput benchmark. The Wi-Fi radio runs on the **coprocessor**; the **host** runs the upstream IDF `wifi/iperf` console app, with its `esp_wifi_*` calls routed to the coprocessor over ESP-Hosted. Associate with an AP, then drive TCP/UDP iperf from the console to measure end-to-end throughput across the hosted transport.
+Firmware cho M5StickS3 (ESP32-S3): co-processor esp_hosted 3.1.0 (WiFi 2,4 GHz qua SPI) cộng `audio_fe` (ES8311, AFE FD HIGH, link I2S tới P4).
+Dựng từ example `wifi/iperf` cp của esp_hosted; README gốc của example: [README_upstream.md](README_upstream.md).
 
-`mcu_host/main/iperf_example_main.c` is the upstream IDF `wifi/iperf` example, unchanged; the hosted layer adds only dependency wiring and throughput-tuned host `sdkconfig.defaults`.
+## Chân
+SPI tới P4: CLK 5, MOSI 6, MISO 7, CS 8, handshake 1, data ready 2, reset 9 (`CONFIG_EH_TRANSPORT_CP_SPI_GPIO_RESET=9`). I2S link: BCLK 43, WS 44, mic ra 4, playback vào 3. Đầy đủ: [../docs/WIRING.md](../docs/WIRING.md).
 
-## Supported Platforms and Transports
+## Cấu hình (menuconfig, mục "StickS3 audio_fe")
+| Tùy chọn | Ý nghĩa | Mặc định |
+| --- | --- | --- |
+| `AUDIO_FE_ENABLE` | Chạy audio_fe (ES8311 + AFE + link) | y |
+| `AUDIO_FE_BYPASS` | Gửi mic thô lên link, không qua AFE (kiểm dây trước) | n |
+| `AUDIO_FE_AMP_ALWAYS_ON` | Ampli luôn bật (chỉ để đo trễ) | n |
+| `AUDIO_FE_LINK_ECHO` | Trả playback của P4 ngược lại (đo trễ điện của link) | n |
+| `AUDIO_FE_FD_HIGH` | AFE FD HIGH_PERF (ngược lại FD LOW_COST) | y |
 
-### Supported Coprocessors
+Console dùng USB-Serial/JTAG (UART0 G43 và G44 dành cho link I2S). Giao thức link: [../docs/I2S_LINK.md](../docs/I2S_LINK.md).
 
-| Coprocessor | ESP32 | ESP32-C Series | ESP32-S2/S3 | ESP32-S31 |
-| :----------: | :---: | :------------: | :---------: | :-------: |
-| Support     | Yes   | Yes            | Yes         | Yes ¹     |
-
-¹ ESP32-S31: preview target, 2.4 GHz only, no SDIO. See [ESP32-S31 test board](https://github.com/espressif/esp-hosted/blob/master/docs/getting-started-mcu.md#esp32-s31-test-board-on-the-esp32-p4-function-ev-board).
-
-### Supported Host Devices
-
-| Host Device | ESP32-P4 | ESP32-H2 | Other MCUs | Linux |
-| :---------: | :------: | :------: | :--------: | :---: |
-| Support     | Yes | Yes | [Yes](https://github.com/espressif/esp-hosted/blob/master/docs/getting-started-mcu.md) | [Yes](https://github.com/espressif/esp-hosted/blob/master/docs/getting-started-linux.md) |
-
-### Supported Connection buses
-
-| Connection bus | SDIO | SPI Full-Duplex | SPI Half-Duplex | UART |
-| :------------- | :--: | :-------------: | :-------------: | :--: |
-| Linux host     | Yes  | Yes             | No              | No   |
-| MCU host       | Yes  | Yes             | Yes             | Yes  |
-
-## Scenario
-
-The host associates as a Wi-Fi station through the coprocessor, obtains an IP over the hosted netif, then drives iperf/ping from its console to benchmark the link.
-
-```mermaid
-sequenceDiagram
-    participant App as Host (iperf console)
-    participant CP as Co-processor (Wi-Fi)
-    participant AP as Access Point / peer
-    App->>CP: connect to AP (esp_wifi_* over RPC)
-    CP->>AP: associate + authenticate
-    App-->>App: IP_EVENT_STA_GOT_IP (got IP)
-    App->>AP: iperf -c / -s (TCP/UDP throughput over the hosted transport)
-```
-
-The Wi-Fi radio runs on the co-processor firmware (`CONFIG_ESP_HOSTED_CP_FEAT_WIFI=y`, preset in `cp/sdkconfig.defaults`) — no extra option to enable. Select the transport (**SDIO** gives the best throughput):
-
+## Build
 ```bash
-cd examples/wifi/iperf/cp
-idf.py set-target esp32c5
-idf.py menuconfig
+source ~/.espressif/tools/activate_idf_v6.1.sh
+idf.py set-target esp32s3 && idf.py build && idf.py -p <cổng S3> flash
 ```
-
-```text
-Component config
-└── ESP-Hosted
-     └── Configure coprocessor
-          └── CP transport
-               ├── Communication bus (co-processor <== bus ==> host)
-               │    ├── ( ) SPI Full Duplex
-               │    ├── (X) SDIO                    <── default
-               │    ├── ( ) SPI Half Duplex         ← MCU host only
-               │    └── ( ) UART                    ← MCU host only
-               └── SDIO Configuration               ← clock, GPIOs, checksum (defaults OK)
-```
-
-The CP dependency config is **pre-set in `cp/sdkconfig.defaults`** (do not remove):
-
-```text
-CONFIG_ESP_HOSTED_CP_FEAT_WIFI=y               # Wi-Fi (default CP feature)
-CONFIG_BT_ENABLED=n                            # BT off (unused by this example)
-```
-
-Then flash and monitor:
-
-```bash
-idf.py -p <cp_usb_serial_port> flash monitor
-```
-
-<!-- generated from ../README.md — edit that file, not this one -->

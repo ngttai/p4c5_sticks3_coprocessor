@@ -26,6 +26,6 @@
 ## Điểm dễ vấp
 
 - **Chân strapping của S3 (G3):** không đổi vai trò; chỉ dùng làm ngõ vào và để P4 đẩy magic `0xA55A` (xem [I2S_LINK.md](I2S_LINK.md)).
-- **Mở cổng serial reset board:** nhớ khi ghi log.
+- **Reset qua cổng serial:** một số công cụ mở cổng làm reset board; dùng script trong [../tools/](../tools/) để ghi log mà không reset.
 - **Phiên bản:** dùng IDF 6.1 và `esp_hosted` 3.1.0 cho cả hai phía; slave stock C5 trên board gốc dùng 2.12.13 nên không dùng chung được.
 - **RAM nội S3 sát 40 KB:** thêm tính năng ở S3 cần kiểm lại.

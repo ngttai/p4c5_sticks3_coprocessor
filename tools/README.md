@@ -12,7 +12,7 @@ Script đo trên PC dùng để tạo các số trong [../docs/logs/](../docs/lo
 | `WS`, `WP` | Tên và mật khẩu WiFi 2,4 GHz. Chỉ đọc từ môi trường, không lưu vào file; log tự che hai giá trị này |
 | `OUT_DIR` | (tuỳ chọn) nơi ghi kết quả của `soak1h.py`, mặc định thư mục tạm |
 
-Các script mở cổng với `dtr` và `rts` tắt để **không reset board**. Mở cổng bằng `cat`, `idf.py monitor` hay công cụ khác thường reset P4, và qua GPIO50 reset luôn S3.
+Các script mở cổng với `dtr` và `rts` tắt để **không reset board**. Công cụ kéo DTR/RTS khi mở cổng (như `idf.py monitor` hoặc `flash`) có thể reset P4, và qua GPIO50 reset luôn S3.
 
 ## Script
 

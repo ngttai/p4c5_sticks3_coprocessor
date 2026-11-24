@@ -20,4 +20,4 @@ Tổng quan, kết quả và đấu dây: [../README.md](../README.md), [../docs
 source ~/.espressif/tools/activate_idf_v6.1.sh
 idf.py set-target esp32p4 && idf.py build
 ```
-Cần nạp `../cp_s3` lên StickS3 trước. Mở cổng serial reset board.
+Cần nạp `../cp_s3` lên StickS3 trước. Nạp hoặc monitor P4 cũng reset S3 (qua GPIO50).

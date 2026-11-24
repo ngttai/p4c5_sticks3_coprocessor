@@ -38,7 +38,7 @@ S3 làm được vai trò co-processor cho P4C5 với hai việc cùng lúc: **W
 - **Core 1 chạm ngưỡng 60%** ở đỉnh (AFE FD HIGH).
 - **Trễ mic đến P4 chưa đo trực tiếp.** Ước tính trung bình 67 đến 72 ms, xấu nhất khoảng 95 ms (ngưỡng plan 80 ms). Có thể giảm khoảng 16 ms bằng cách giảm DMA của link từ 4 xuống 2 mô tả.
 - **Chân G3 của StickS3 là chân strapping:** link playback dùng nó làm ngõ vào, nên S3 phải bỏ qua khung không có magic (0xA55A), nếu không chân hở gây phát tạp âm.
-- **Mở cổng serial reset board:** mở serial của P4 reset P4 và, qua GPIO50, cả S3.
+- **Reset qua cổng serial:** một số cách mở cổng serial (`idf.py flash` hoặc `monitor`, công cụ kéo DTR/RTS) reset board; reset P4 cũng reset S3 qua GPIO50. Mở cổng mà không kéo DTR/RTS (script trong `tools/`, `cat` sau `stty`) không reset trong các lần thử ở đây.
 - **Mic khá ồn ở gain 24 dB:** nền khoảng 62 RMS, giới hạn các số đo RMS; cần đo lại với giọng thật ở nhiều khoảng cách.
 - **Loa StickS3 nhỏ:** cần đường cong âm lượng riêng (−24 đến −8 dB), mức cố định 100 trên S3 và biên độ bíp 24000 để nghe rõ ở mức thấp.
 

@@ -42,3 +42,8 @@ Cài ở `cp_s3/main/audio_fe.c` (phía S3) và `phone_s3/components/esp32p4c5_b
 | Mic nhiễu toàn thang sau wake word | Bộ đệm mic ghi dở byte lẻ (đã sửa ở phiên bản này) |
 | `ctr_err` tăng liên tục | P4 và S3 lệch khung (reset một bên), hoặc dây I2S dài, nhiễu |
 | `play_underrun` tăng | P4 bận, không kịp đẩy playback |
+
+## Lệnh thử link (host_p4)
+
+- `linktest [giây] [tone]`: P4 làm slave, đếm khung, in mỗi giây RMS và đỉnh của kênh L, số lỗi bộ đếm; cuối bài in `LINKTEST RESULT`. `tone` gửi tone 1 kHz xuống S3.
+- `linklat [n]`: gửi xung click và đo thời gian nhận lại. Đo điện cần `cp_s3` bật `AUDIO_FE_LINK_ECHO`; đo qua loa và mic không dùng được vì nền mic ồn (xem log phase 5).
