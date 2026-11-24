@@ -43,21 +43,53 @@ flowchart LR
 
 ## Data flow
 
-```mermaid
-flowchart LR
-    MIC["ES8311 microphone"] --> AFE["AFE FD HIGH<br/>(mic + ref)"]
-    REF["DAC loopback<br/>ES8311 R channel"] --> AFE
-    AFE -->|"L = clean mic<br/>R = counter"| LINKTX["I2S S3 to P4"]
-    LINKTX --> RX["P4 link_task<br/>mic stream buffer"]
-    RX --> WAKE["WakeNet / Opus encoder<br/>(Assistant)"]
+Two paths run at the same time. Both cross the I2S link in 8 ms chunks (128 frames); the S3 is the I2S master.
 
-    APP["Music, radio, beep, TTS"] --> VOL["software volume<br/>(esp_codec_dev, −24..−8 dB)"]
-    VOL --> RS["resampler to 16 kHz mono"]
-    RS --> PSB["playback stream buffer"]
-    PSB -->|"L = playback<br/>R = magic 0xA55A"| LINKRX["I2S P4 to S3"]
-    LINKRX --> CODEC["S3 codec_task"]
-    CODEC --> DAC["ES8311 DAC, amplifier, speaker"]
-    DAC --> REF
+### Microphone: from the ES8311 to the assistant
+
+```mermaid
+sequenceDiagram
+    participant MIC as ES8311 (mic + DAC loopback)
+    participant CT as S3 codec_task (core 1)
+    participant AFE as S3 AFE FD HIGH (inside feed/fetch)
+    participant LS as S3 link_task (core 0)
+    participant LP as P4 link_task
+    participant AS as P4 Assistant (WakeNet, Opus)
+
+    loop every 32 ms chunk (512 samples)
+        MIC->>CT: L = mic, R = DAC reference
+        CT->>AFE: feed(mic, ref)
+        AFE->>LS: fetch: clean mic, AEC + NS + VAD (txq in PSRAM)
+        LS->>LP: I2S frame, L = clean mic, R = 16-bit counter
+        LP->>LP: check counter (ctr_err), write whole 256-byte blocks
+        LP->>AS: mic stream buffer, 16 kHz mono
+    end
+    Note over AFE: the reference is what the speaker plays, so the AFE subtracts the echo from the mic
+```
+
+### Speaker: from an app to the ES8311
+
+```mermaid
+sequenceDiagram
+    participant APP as P4 app (music, radio, beep, TTS)
+    participant VOL as P4 esp_codec_dev (software volume)
+    participant RS as P4 resampler
+    participant LP as P4 link_task
+    participant LS as S3 link_task (core 0)
+    participant CT as S3 codec_task (core 1)
+    participant SPK as ES8311 DAC, amplifier, speaker
+
+    APP->>VOL: PCM, any sample rate
+    VOL->>RS: scaled by the volume curve (-24 to -8 dB)
+    RS->>LP: 16 kHz mono (playback stream buffer)
+    LP->>LS: I2S frame, L = playback, R = magic 0xA55A
+    alt more than 3/4 of the frames carry the magic
+        LS->>CT: playback chunk (rxq in PSRAM)
+        CT->>SPK: PCM, amplifier on when the peak is above 30
+    else no magic (floating G3 or P4 not running)
+        LS->>CT: silence
+    end
+    SPK-->>CT: DAC loopback, the R channel becomes the AFE reference
 ```
 
 Details of the I2S frame format: [I2S_LINK.md](I2S_LINK.md).

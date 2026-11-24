@@ -43,24 +43,56 @@ flowchart LR
 
 ## Luồng dữ liệu
 
-```mermaid
-flowchart LR
-    MIC["Mic ES8311"] --> AFE["AFE FD HIGH<br/>(mic + ref)"]
-    REF["DAC loopback<br/>kênh R ES8311"] --> AFE
-    AFE -->|"L = mic sạch<br/>R = bộ đếm"| LINKTX["I2S S3→P4"]
-    LINKTX --> RX["link_task P4<br/>stream buffer mic"]
-    RX --> WAKE["WakeNet / Opus encoder<br/>(Assistant)"]
+Hai đường chạy cùng lúc. Cả hai đi qua link I2S theo khối 8 ms (128 khung); S3 là master của I2S.
 
-    APP["Nhạc, radio, bíp, TTS"] --> VOL["software volume<br/>(esp_codec_dev, −24..−8 dB)"]
-    VOL --> RS["resampler → 16 kHz mono"]
-    RS --> PSB["stream buffer playback"]
-    PSB -->|"L = playback<br/>R = magic 0xA55A"| LINKRX["I2S P4→S3"]
-    LINKRX --> CODEC["codec_task S3"]
-    CODEC --> DAC["ES8311 DAC → ampli → loa"]
-    DAC --> REF
+### Mic: từ ES8311 tới trợ lý
+
+```mermaid
+sequenceDiagram
+    participant MIC as ES8311 (mic + DAC loopback)
+    participant CT as S3 codec_task (core 1)
+    participant AFE as S3 AFE FD HIGH (trong feed/fetch)
+    participant LS as S3 link_task (core 0)
+    participant LP as P4 link_task
+    participant AS as P4 Assistant (WakeNet, Opus)
+
+    loop mỗi khối 32 ms (512 mẫu)
+        MIC->>CT: L = mic, R = tham chiếu DAC
+        CT->>AFE: feed(mic, ref)
+        AFE->>LS: fetch: mic sạch, AEC + NS + VAD (txq ở PSRAM)
+        LS->>LP: khung I2S, L = mic sạch, R = bộ đếm 16 bit
+        LP->>LP: kiểm bộ đếm (ctr_err), ghi nguyên khối 256 byte
+        LP->>AS: stream buffer mic, 16 kHz mono
+    end
+    Note over AFE: tham chiếu chính là tiếng loa đang phát, nên AFE trừ tiếng vọng khỏi mic
 ```
 
-Quy ước chi tiết của khung I2S: [I2S_LINK.md](I2S_LINK.md).
+### Loa: từ ứng dụng tới ES8311
+
+```mermaid
+sequenceDiagram
+    participant APP as P4 app (nhạc, radio, bíp, TTS)
+    participant VOL as P4 esp_codec_dev (volume phần mềm)
+    participant RS as P4 resampler
+    participant LP as P4 link_task
+    participant LS as S3 link_task (core 0)
+    participant CT as S3 codec_task (core 1)
+    participant SPK as ES8311 DAC, ampli, loa
+
+    APP->>VOL: PCM, tần số lấy mẫu bất kỳ
+    VOL->>RS: nhân theo đường cong âm lượng (-24 đến -8 dB)
+    RS->>LP: 16 kHz mono (stream buffer playback)
+    LP->>LS: khung I2S, L = playback, R = magic 0xA55A
+    alt hơn 3/4 số khung có magic
+        LS->>CT: khối playback (rxq ở PSRAM)
+        CT->>SPK: PCM, ampli bật khi đỉnh lớn hơn 30
+    else không có magic (G3 hở hoặc P4 chưa chạy)
+        LS->>CT: im lặng
+    end
+    SPK-->>CT: DAC loopback, kênh R thành tham chiếu cho AFE
+```
+
+Chi tiết định dạng khung I2S: [I2S_LINK.md](I2S_LINK.md).
 
 ## Phân chia CPU và bộ nhớ trên S3
 
