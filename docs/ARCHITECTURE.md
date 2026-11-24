@@ -2,7 +2,7 @@
 
 English | [Tiếng Việt](vi/ARCHITECTURE.md)
 
-The P4 (KSDIY P4C5) is the host: it runs the UI, the apps and wake-word detection. The M5StickS3 (ESP32-S3) is the co-processor: it gives the P4 WiFi over SPI and cleans the microphone with the AFE (AEC, noise suppression, VAD), returning the result over I2S. The ESP32-C5 on the P4C5 is unused (its EN pin, GPIO54, is held low).
+The P4 (KSDIY P4C5) is the host: it runs the UI, the apps and wake-word detection. The M5StickS3 (ESP32-S3) is the co-processor: it gives the P4 WiFi over SPI and cleans the microphone with the AFE (AEC, noise suppression, VAD), returning the result over I2S. The ESP32-C5 on the P4C5 is unused (its EN pin, GPIO54, is held low). Terms such as AFE, AEC and ESP-Hosted are explained in the [Glossary](#glossary) at the end.
 
 ## Block diagram
 
@@ -111,3 +111,35 @@ Details of the I2S frame format: [I2S_LINK.md](I2S_LINK.md).
 - **Audio:** `esp32p4c5_audio.c` provides `bsp_audio_codec_speaker_init()` and `bsp_audio_codec_microphone_init()` like the original BSP, but the device behind them is a virtual codec (no `codec_if`) that uses the esp_codec_dev software volume. The speaker accepts mono PCM at any rate and downsamples it to 16 kHz.
 - **Assistant:** `assistant_afe_open()` returns `false` when `CONFIG_BSP_AUDIO_S3_LINK=y`: no AFE runs on the P4. Wake word and the Opus encoder read the clean microphone from the link.
 - **S3 info:** Settings, About shows the link counters (frame errors or losses, speaker underruns).
+
+## Glossary
+
+| Term | Meaning |
+| --- | --- |
+| **esp-sr** | Espressif's speech recognition library (version 2.6.2 here). It contains the AFE and WakeNet. |
+| **AFE** (Audio Front-End) | The audio processing stage between the microphone and the application. It takes a microphone signal and a reference signal and returns one cleaned microphone channel. |
+| **Input format `"MR"`** | The AFE input layout: **M** = microphone, **R** = reference (a copy of what the speaker plays). |
+| **Reference (ref)** | The signal the speaker is playing, given to the AFE so it can subtract the echo. Here it is the ES8311 DAC loopback on the R channel. |
+| **AFE type SR / FD / VC** | Three esp-sr AFE variants. **SR** (Speech Recognition): light, weak echo removal. **FD** (Full-Duplex): talk and listen at the same time, used here. **VC** (Voice Communication): adds neural-network noise suppression, the heaviest on CPU. |
+| **Mode LOW_COST / HIGH_PERF** | Resource trade-off of an AFE type. **HIGH_PERF** is better quality and costs more CPU. "FD HIGH" = Full-Duplex type in HIGH_PERF mode (about 38% of one S3 core). |
+| **AEC** (Acoustic Echo Cancellation) | Removes the speaker sound that comes back into the microphone, using the reference. It lets the microphone hear you while the assistant is speaking. |
+| **ERLE** | Echo Return Loss Enhancement: how many dB of echo the AEC removes. |
+| **NS** (Noise Suppression) | Reduces steady background noise such as fans or room noise. |
+| **VAD** (Voice Activity Detection) | Detects when someone is speaking. Used here for measurement only. |
+| **Far-end / near-end** | Far-end = the sound played by the speaker (the other party). Near-end = the person at the microphone. |
+| **Double-talk** | Both ends speak at once. A good AEC removes the far-end but keeps the near-end voice. |
+| **Barge-in** | Interrupting the assistant while it is speaking. It needs AEC so the assistant does not hear itself. |
+| **WakeNet** | The esp-sr wake-word detector ("Hi ESP"). It runs on the P4 on the clean microphone from the S3. |
+| **Opus** | The audio codec used to send speech to the assistant server. |
+| **TTS** | Text-to-speech: synthetic speech, used here as a test signal and as the assistant's voice. |
+| **ES8311** | The audio codec chip on the StickS3 (microphone input, DAC output, loopback). |
+| **PMIC** | Power-management IC (M5PM1 on the StickS3). It switches the audio rail and the speaker amplifier. |
+| **ESP-Hosted** | Espressif's host and co-processor framework: the P4 (host) uses the WiFi of the S3 (co-processor) as if it were local. Version 3.1.0 on both sides. |
+| **Host / co-processor (cp)** | Host = the P4 running the application. Co-processor = the S3 providing WiFi and audio processing. |
+| **RPC** | Remote procedure call: how the P4 calls WiFi functions that run on the S3 through ESP-Hosted. |
+| **SPI full-duplex** | The WiFi link between the two boards: clock, MOSI, MISO and CS, plus handshake, data-ready and reset lines. |
+| **I2S master / slave** | The master supplies the clock. The S3 is master (BCLK and WS); the P4 is slave. |
+| **BCLK / WS** | I2S bit clock and word select (left/right frame clock). |
+| **Strapping pin** | A pin the chip reads at boot to choose its mode. G3 of the S3 is one, so it is used as an input only. |
+| **PSRAM** | External RAM. The S3 keeps large buffers and some task stacks there to save internal RAM. |
+| **Magic 0xA55A** | The marker the P4 puts in the R channel of valid playback frames; the S3 ignores frames without it. |
