@@ -1,6 +1,6 @@
 # KSDIY P4C5 + StickS3: dùng ESP32-S3 làm bộ WiFi và xử lý mic cho ESP32-P4
 
-> Tên thư mục `ksdiy_p4_s3` = board **KSDIY ESP32-P4C5** (P4) ghép với **M5StickS3** (chip ESP32-**S3**).
+> Tên `p4c5_sticks3_coprocessor` = board **KSDIY ESP32-P4C5** (P4C5) dùng **M5StickS3** (chip ESP32-S3) làm co-processor.
 
 ## Đây là gì
 
