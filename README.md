@@ -1,6 +1,32 @@
-# ksdiy_p4_s3
+# KSDIY P4C5 + StickS3: dùng ESP32-S3 làm bộ WiFi và xử lý mic cho ESP32-P4
 
-M5StickS3 (ESP32-S3) làm co-processor cho board KSDIY P4C5: **WiFi 2,4 GHz qua SPI (ESP-Hosted 3.1.0)** và **mic sạch (AEC, NS, VAD) qua I2S**. Kèm bản phone chạy trên cấu hình đó.
+> Tên thư mục `ksdiy_p4_s3` = board **KSDIY ESP32-P4C5** (P4) ghép với **M5StickS3** (chip ESP32-**S3**).
+
+## Đây là gì
+
+Board KSDIY P4C5 có ESP32-P4 (chạy giao diện và ứng dụng) và một ESP32-C5 làm WiFi qua SDIO. Dự án này **thay C5 bằng một M5StickS3** (ESP32-S3) nối ngoài bằng dây, để thử xem S3 có làm thay được hai việc:
+
+1. **WiFi cho P4:** S3 làm co-processor WiFi 2,4 GHz, nối P4 qua SPI bằng ESP-Hosted 3.1.0.
+2. **Xử lý mic và loa:** S3 chạy AFE (khử tiếng vọng AEC, khử nhiễu, VAD) trên mic của StickS3 rồi gửi tiếng sạch sang P4 qua I2S; loa của StickS3 phát âm thanh do P4 gửi sang.
+
+Kết quả: làm được (WiFi khoảng 10 đến 13 Mbps, AEC tốt, link I2S ổn định 1 giờ), nhưng mất BLE, WiFi 5 GHz và chất lượng nhạc. Chi tiết: [docs/RESULTS.md](docs/RESULTS.md).
+
+```mermaid
+flowchart LR
+    P4["KSDIY P4C5<br/>ESP32-P4<br/>giao diện, app, wake word"]
+    S3["M5StickS3<br/>ESP32-S3<br/>WiFi + AEC + mic + loa"]
+    AP["Router WiFi"]
+    P4 <-->|"SPI: WiFi (ESP-Hosted)"| S3
+    P4 <-->|"I2S 16 kHz: mic sạch và loa"| S3
+    S3 <--> AP
+```
+
+Repo gồm firmware cho cả hai chip, một bản phone chạy thử trên cấu hình này, tài liệu nghiên cứu và script đo.
+
+## Cần gì để chạy lại
+
+- 1 board KSDIY P4C5 và 1 M5StickS3, nối bằng 11 dây và GND ([sơ đồ đấu dây](docs/WIRING.md)).
+- ESP-IDF 6.1, PC cùng mạng WiFi 2,4 GHz.
 
 ## Cấu trúc
 
