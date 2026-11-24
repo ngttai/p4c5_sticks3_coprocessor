@@ -1,5 +1,7 @@
 # Port `phone_s3` sang board P4 khác
 
+Tiếng Việt | [English](en/PORTING.md)
+
 `phone_s3` tách phần phụ thuộc phần cứng vào một BSP cục bộ, `phone_s3/components/esp32p4c5_bsp`. Board mới cần BSP riêng của nó; phần giao diện và ứng dụng không đổi nếu BSP cung cấp cùng API.
 
 ## Điều kiện phần cứng

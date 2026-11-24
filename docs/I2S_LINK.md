@@ -1,5 +1,7 @@
 # Giao thức link I2S giữa S3 và P4
 
+Tiếng Việt | [English](en/I2S_LINK.md)
+
 Cài ở `cp_s3/main/audio_fe.c` (phía S3) và `phone_s3/components/esp32p4c5_bsp/src/esp32p4c5_audio.c` (phía P4). Bản thử độc lập ở `host_p4/main/link_test.c`.
 
 ## Định dạng

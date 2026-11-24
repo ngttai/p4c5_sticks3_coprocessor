@@ -1,5 +1,7 @@
 # host_p4
 
+Tiếng Việt | [English](README.en.md)
+
 Firmware thử trên KSDIY P4C5 (ESP32-P4): host esp_hosted 3.1.0 qua SPI tới StickS3, console `iperf` và hai lệnh kiểm tra link I2S. Dùng để kiểm dây và đo trước khi chạy `../phone_s3`.
 Dựng từ example `wifi/iperf` host; README gốc: [README_upstream.md](README_upstream.md). Khác example: bỏ `esp-extconn` (nó điều khiển C5 qua SDIO) và kéo GPIO54 (EN của C5) xuống thấp.
 

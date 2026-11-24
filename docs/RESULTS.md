@@ -1,5 +1,7 @@
 # Kết quả nghiên cứu: StickS3 (ESP32-S3) thay C5 cho WiFi và AEC trên P4C5
 
+Tiếng Việt | [English](en/RESULTS.md)
+
 Cập nhật 2026-11-24. IDF 6.1, esp_hosted 3.1.0, esp-sr 2.6.2. Chi tiết số đo từng giai đoạn: [logs/](logs/).
 
 ## Kết luận ngắn

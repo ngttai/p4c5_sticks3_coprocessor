@@ -1,5 +1,7 @@
 # tools
 
+Tiếng Việt | [English](README.en.md)
+
 Script đo trên PC dùng để tạo các số trong [../docs/logs/](../docs/logs/). Cần Python 3 với `pyserial` (`pip install pyserial`).
 
 ## Biến môi trường chung

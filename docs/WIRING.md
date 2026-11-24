@@ -1,5 +1,7 @@
 # Sơ đồ đấu dây
 
+Tiếng Việt | [English](en/WIRING.md)
+
 Hai board nối bằng 11 dây tín hiệu và GND. Phía P4C5 lấy từ header JP1 (11 GPIO trống: 26 đến 30 và 45 đến 50, mỗi chân qua điện trở nối tiếp 100 Ω). Phía StickS3 lấy từ header Hat2 và cổng Grove.
 
 ## Sơ đồ

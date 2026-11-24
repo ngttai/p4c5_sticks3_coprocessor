@@ -1,5 +1,7 @@
 # KSDIY P4C5 + StickS3: dùng ESP32-S3 làm bộ WiFi và xử lý mic cho ESP32-P4
 
+Tiếng Việt | [English](README.en.md)
+
 > Tên `p4c5_sticks3_coprocessor` = board **KSDIY ESP32-P4C5** (P4C5) dùng **M5StickS3** (chip ESP32-S3) làm co-processor.
 
 ## Đây là gì

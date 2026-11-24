@@ -1,5 +1,7 @@
 # phone_s3
 
+Tiếng Việt | [English](README.en.md)
+
 Phone (Brookesia, LVGL) cho KSDIY P4C5 dùng M5StickS3 làm co-processor: WiFi 2,4 GHz qua SPI (esp_hosted 3.1.0) và âm thanh qua link I2S 16 kHz mono. Bản tinh giản từ `esp32p4c5_phone`, chỉ giữ các app để thử WiFi, mic và âm thanh.
 
 Tổng quan, kết quả và đấu dây: [../README.md](../README.md), [../docs/](../docs/).

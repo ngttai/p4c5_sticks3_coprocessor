@@ -1,5 +1,7 @@
 # afe_s3
 
+Tiếng Việt | [English](README.en.md)
+
 Bộ thử AFE độc lập trên StickS3 (không có WiFi và link I2S), dùng để chọn cấu hình AFE ở giai đoạn 4. Kết quả: [../docs/logs/2026-11-23_phase4_afe_standalone.md](../docs/logs/2026-11-23_phase4_afe_standalone.md).
 
 Chọn bài thử bằng `TEST_MODE` trong `main/main.c`:

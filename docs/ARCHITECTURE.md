@@ -1,5 +1,7 @@
 # Kiến trúc
 
+Tiếng Việt | [English](en/ARCHITECTURE.md)
+
 P4 (KSDIY P4C5) là host chạy giao diện, ứng dụng và wake word. M5StickS3 (ESP32-S3) là co-processor: WiFi cho P4 qua SPI, và làm sạch mic bằng AFE (AEC, khử nhiễu, VAD) rồi trả lại qua I2S. ESP32-C5 trên P4C5 không dùng (EN kéo thấp ở GPIO54).
 
 ## Sơ đồ khối

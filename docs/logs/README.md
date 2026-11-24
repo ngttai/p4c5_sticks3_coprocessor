@@ -1,5 +1,7 @@
 # Log đo
 
+Tiếng Việt | [English](README.en.md)
+
 Đọc theo thứ tự thời gian; mỗi file giữ số liệu ở thời điểm đo, kể cả các cấu hình sau đó đã bị thay.
 
 | File | Nội dung | Ghi chú |

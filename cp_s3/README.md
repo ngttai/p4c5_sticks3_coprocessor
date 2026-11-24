@@ -1,5 +1,7 @@
 # cp_s3
 
+Tiếng Việt | [English](README.en.md)
+
 Firmware cho M5StickS3 (ESP32-S3): co-processor esp_hosted 3.1.0 (WiFi 2,4 GHz qua SPI) cộng `audio_fe` (ES8311, AFE FD HIGH, link I2S tới P4).
 Dựng từ example `wifi/iperf` cp của esp_hosted; README gốc của example: [README_upstream.md](README_upstream.md).
 
