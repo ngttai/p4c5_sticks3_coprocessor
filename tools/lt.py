@@ -1,5 +1,5 @@
-"""Chạy lệnh trên console của P4 (vd `linktest 20 tone`) và in kết quả cùng dòng audio_fe của S3.
-Dùng: P4_PORT=... S3_PORT=... python3 lt.py 'linktest 20 tone' 'linktest 10'"""
+"""Run commands on the P4 console (e.g. `linktest 20 tone`) and print the result together with the S3 audio_fe lines.
+Usage: P4_PORT=... S3_PORT=... python3 lt.py 'linktest 20 tone' 'linktest 10'"""
 import os,serial,time,threading,sys,re
 P4=os.environ['P4_PORT']
 S3=os.environ['S3_PORT']

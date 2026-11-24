@@ -29,7 +29,7 @@ CONFIG_ESP_HOSTED_HOST_FEAT_WIFI=y
 # CONFIG_WIFI_CMD_ENABLE_ITWT is not set
 
 
-# Co-processor = StickS3 (ESP32-S3) qua SPI full-duplex trên JP1 của P4C5
+# Co-processor = StickS3 (ESP32-S3) over full-duplex SPI on JP1 of the P4C5
 CONFIG_SLAVE_IDF_TARGET_ESP32S3=y
 CONFIG_ESP_HOSTED_CP_TARGET_ESP32S3=y
 CONFIG_ESP_HOSTED_HOST_TRANSPORT_BUS_SPI=y
@@ -59,10 +59,10 @@ CONFIG_LWIP_TCPIP_RECVMBOX_SIZE=64
 CONFIG_LWIP_TCP_SACK_OUT=y
 
 # ── sticks3_coprocessor ──────────────────────────────────────────────
-# esp-extconn đã bỏ khỏi main/idf_component.yml: nó điều khiển C5 qua GPIO42/43/47 + SDIO,
-# trong khi C5 nằm im và GPIO46-49 dùng cho I2S
-# P4C5 có flash 16 MB
+# esp-extconn was removed from main/idf_component.yml: it drives the C5 over GPIO42/43/47 + SDIO,
+# while the C5 stays idle and GPIO46-49 are used for I2S
+# The P4C5 has 16 MB of flash
 CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
 
-# Console qua USB-Serial/JTAG (cổng Type-C dùng để nạp) để gõ lệnh iperf
+# Console over USB-Serial/JTAG (the Type-C port used for flashing) to type iperf commands
 CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y

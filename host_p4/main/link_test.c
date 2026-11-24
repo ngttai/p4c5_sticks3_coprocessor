@@ -1,12 +1,12 @@
 /*
- * Kiểm tra link I2S P4 (slave) <-> StickS3 (master), giai đoạn 5.
- *   GPIO46 BCLK, GPIO47 WS (vào), GPIO48 DIN (mic sạch từ S3), GPIO49 DOUT (playback tới S3).
- * Khung S3 -> P4: L = mic (sạch nếu AFE bật), R = bộ đếm 16 bit tăng 1 mỗi khung (đếm khung lỗi/mất).
- * Khung P4 -> S3: L = playback, R = magic 0xA55A (khung hợp lệ).
+ * I2S link test, P4 (slave) <-> StickS3 (master), phase 5.
+ *   GPIO46 BCLK, GPIO47 WS (inputs), GPIO48 DIN (clean mic from the S3), GPIO49 DOUT (playback to the S3).
+ * S3 -> P4 frame: L = mic (clean when the AFE is on), R = 16-bit counter, +1 per frame (counts bad/lost frames).
+ * P4 -> S3 frame: L = playback, R = magic 0xA55A (valid frame).
  *
- * Lệnh (chạy nền để iperf chạy cùng lúc):
- *   linktest [giây] [tone]   đếm khung, tone = gửi tone 1 kHz xuống S3
- *   linklat  [số lần]        đo độ trễ bằng xung click: P4 -> S3 -> loa -> mic -> P4 (dùng firmware S3 bypass AFE)
+ * Commands (run in the background so iperf can run at the same time):
+ *   linktest [seconds] [tone]   count frames, tone = send a 1 kHz tone to the S3
+ *   linklat  [count]            measure latency with a click pulse: P4 -> S3 -> speaker -> mic -> P4 (S3 firmware in AFE bypass)
  */
 #include <inttypes.h>
 #include <math.h>
@@ -64,7 +64,7 @@ static void linktest_run(int secs, bool tone)
     unsigned total_frames = 0, total_err = 0, total_to = 0, total_zero_l = 0;
     int64_t t0 = esp_timer_get_time(), tsec = t0;
     double sq = 0; int peak = 0; unsigned nsec = 0, errsec = 0;
-    printf("linktest: %d s, tone=%d (S3 phải đang chạy audio_fe)\n", secs, tone);
+    printf("linktest: %d s, tone=%d (the S3 must be running audio_fe)\n", secs, tone);
     while (esp_timer_get_time() - t0 < (int64_t)secs * 1000000) {
         for (int i = 0; i < CHUNK; i++) {
             int16_t v = tone ? (int16_t)(8000.0f * sinf(2.0f * (float)M_PI * (tone_idx % 16) / 16.0f)) : 0;
@@ -97,7 +97,7 @@ static void linktest_run(int secs, bool tone)
 
 static int cmp_i(const void *a, const void *b) { return *(const int *)a - *(const int *)b; }
 
-/* Click: P4 ghi một chunk 1 kHz biên độ lớn, đo đến lúc mic (qua loa) trả về mẫu vượt ngưỡng. */
+/* Click: the P4 writes one large-amplitude 1 kHz chunk and times until the mic (through the speaker) returns a sample above the threshold. */
 static void linklat_run(int trials)
 {
     i2s_chan_handle_t tx, rx;
@@ -105,8 +105,8 @@ static void linklat_run(int trials)
     static int16_t rxb[CHUNK * 2], txb[CHUNK * 2];
     int lat[32]; int nl = 0;
     if (trials > 32) trials = 32;
-    printf("linklat: %d lần click (1 kHz, 8 ms, biên độ 24000), S3 nên ở chế độ bypass AFE\n", trials);
-    /* 1 giây im lặng để ampli tắt và AFE ổn định */
+    printf("linklat: %d clicks (1 kHz, 8 ms, amplitude 24000), the S3 should be in AFE bypass mode\n", trials);
+    /* 1 second of silence so the amplifier switches off and the AFE settles */
     for (int t = 0; t < trials; t++) {
         int64_t tstart = esp_timer_get_time();
         int64_t t_click = 0; bool sent = false, found = false;
@@ -128,16 +128,16 @@ static void linklat_run(int trials)
             else if (!found && pk > (base_peak * 3 > 12000 ? base_peak * 3 : 12000)) {
                 found = true;
                 if (nl < 32) lat[nl++] = (int)((t_rx - t_click) / 1000);
-                printf("  click %2d: %d ms (nền đỉnh %d, phát hiện đỉnh %d)\n", t + 1, (int)((t_rx - t_click) / 1000), base_peak, pk);
+                printf("  click %2d: %d ms (floor peak %d, detected peak %d)\n", t + 1, (int)((t_rx - t_click) / 1000), base_peak, pk);
             }
         }
-        if (!found) printf("  click %2d: không phát hiện (nền đỉnh %d)\n", t + 1, base_peak);
+        if (!found) printf("  click %2d: not detected (floor peak %d)\n", t + 1, base_peak);
     }
     if (nl) {
         qsort(lat, nl, sizeof(int), cmp_i);
-        printf("LINKLAT RESULT: n=%d min=%d median=%d max=%d ms (điện, đi và về qua link, gồm DMA hai chiều; một chiều khoảng một nửa)\n", nl, lat[0], lat[nl / 2], lat[nl - 1]);
+        printf("LINKLAT RESULT: n=%d min=%d median=%d max=%d ms (electrical, round trip over the link, including DMA both ways; one way is about half)\n", nl, lat[0], lat[nl / 2], lat[nl - 1]);
     } else {
-        printf("LINKLAT RESULT: không phát hiện click nào\n");
+        printf("LINKLAT RESULT: no click detected\n");
     }
     link_close(tx, rx);
 }
@@ -173,8 +173,8 @@ static int linklat_cmd(int argc, char **argv)
 
 void register_link_test(void)
 {
-    const esp_console_cmd_t c1 = { .command = "linktest", .help = "I2S link tới StickS3: linktest [giây] [tone]", .hint = NULL, .func = &linktest_cmd };
-    const esp_console_cmd_t c2 = { .command = "linklat", .help = "Đo độ trễ link bằng xung click: linklat [số lần]", .hint = NULL, .func = &linklat_cmd };
+    const esp_console_cmd_t c1 = { .command = "linktest", .help = "I2S link to the StickS3: linktest [seconds] [tone]", .hint = NULL, .func = &linktest_cmd };
+    const esp_console_cmd_t c2 = { .command = "linklat", .help = "Measure link latency with a click pulse: linklat [count]", .hint = NULL, .func = &linklat_cmd };
     ESP_ERROR_CHECK(esp_console_cmd_register(&c1));
     ESP_ERROR_CHECK(esp_console_cmd_register(&c2));
 }

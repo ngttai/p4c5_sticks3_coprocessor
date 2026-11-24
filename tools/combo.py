@@ -1,5 +1,5 @@
-"""iperf TCP (RX, TX hoặc both) cùng lúc với `linktest ... tone`; in throughput, kết quả link và log S3.
-Dùng: P4_PORT=... S3_PORT=... PC_IP=... WS=<ssid> WP=<mật khẩu> python3 combo.py [giây] [rx|tx|both]"""
+"""iperf TCP (RX, TX or both) together with `linktest ... tone`; prints throughput, the link result and the S3 log.
+Usage: P4_PORT=... S3_PORT=... PC_IP=... WS=<ssid> WP=<password> python3 combo.py [seconds] [rx|tx|both]"""
 import os,serial,time,threading,sys,re,socket,os
 P4=os.environ['P4_PORT']
 S3=os.environ['S3_PORT']

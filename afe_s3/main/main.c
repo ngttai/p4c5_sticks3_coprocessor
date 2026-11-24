@@ -1,13 +1,13 @@
 /*
- * afe_s3: giai đoạn 4 của plan, AFE độc lập trên StickS3 (ESP32-S3).
+ * afe_s3: phase 4 of the plan, a standalone AFE on the StickS3 (ESP32-S3).
  *
- * ES8311 xuất tham chiếu số của DAC lên kênh phải (no_dac_ref = false), nên bản ghi 2 kênh là
- * L = mic, R = ref, đúng định dạng "MR" của esp-sr. Với mỗi cấu hình AFE, chương trình:
- *   0-3 s   im lặng (đo nền)
- *   3-11 s  phát tone 1 kHz ra loa (ampli bật chỉ trong lúc này)
- *   11-14 s im lặng
- * và in theo từng giây: mức tone 1 kHz ở mic thô và ở ngõ ra AFE, ERLE = hiệu hai mức,
- * cộng CPU từng core, RAM nội tối thiểu, PSRAM trống.
+ * The ES8311 outputs the DAC digital reference on the right channel (no_dac_ref = false), so the two-channel recording is
+ * L = mic, R = ref, exactly the "MR" format of esp-sr. For each AFE configuration the program does:
+ *   0-3 s   silence (measures the floor)
+ *   3-11 s  plays a 1 kHz tone on the speaker (amplifier on only now)
+ *   11-14 s silence
+ * and prints every second: the 1 kHz tone level at the raw mic and at the AFE output, ERLE = difference of the two levels,
+ * plus per-core CPU, minimum internal RAM and free PSRAM.
  */
 #include <math.h>
 #include <stdio.h>
@@ -50,18 +50,18 @@ static const char *TAG = "afe_s3";
 #define PMIC_GPIO_DIR 0x10
 #define PMIC_GPIO_OUT 0x11
 #define PMIC_GPIO_OD  0x13
-#define PMIC_L3B      (1u << 2)    /* nguồn LCD + audio */
+#define PMIC_L3B      (1u << 2)    /* LCD + audio supply */
 #define PMIC_SPK      (1u << 3)    /* enable ampli AW8737 */
 
-/* esp-sr AFE V1 không có task riêng: AEC/VAD chạy ngay trong feed() và fetch() của task gọi.
- * afe_perferred_core không có tác dụng; muốn AFE nằm trên core 1 thì phải ghim hai task feed/fetch vào core 1. */
+/* esp-sr AFE V1 has no task of its own: AEC/VAD run inside feed() and fetch() of the calling task.
+ * afe_perferred_core has no effect; to run the AFE on core 1 the feed and fetch tasks must be pinned to core 1. */
 #define AFE_CORE 1
 
-/* TEST_MODE 1 = tone 1 kHz, 2 = giọng nói tổng hợp (flite) lặp lại, 3 = double-talk (mỗi vòng chờ nhấn KEY1, in "ALL DONE" khi xong) */
+/* TEST_MODE 1 = 1 kHz tone, 2 = repeated synthetic speech (flite), 3 = double-talk (each round waits for KEY1, prints "ALL DONE" at the end) */
 #define TEST_MODE  3
 #if TEST_MODE == 3
-/* double-talk: 0-1 s im, 1-2 s ba tiếng bip báo vòng mới, 3-16 s phát giọng far-end,
- * bip đơn lúc 8,0 s = BẮT ĐẦU NÓI, bip đơn lúc 15,0 s = DỪNG NÓI */
+/* double-talk: 0-1 s silence, 1-2 s three beeps announcing a new round, 3-16 s far-end speech,
+ * single beep at 8.0 s = START TALKING, single beep at 15.0 s = STOP TALKING */
 #define T_SILENCE1 3
 #define T_TONE_END 17
 #define T_TOTAL    20
@@ -133,9 +133,9 @@ static esp_err_t audio_init(void)
     es8311_codec_cfg_t es_cfg = {
         .ctrl_if = ctrl_if,
         .codec_mode = ESP_CODEC_DEV_WORK_MODE_BOTH,
-        .pa_pin = -1,                 /* ampli do PMIC điều khiển, bật/tắt bằng amp() */
+        .pa_pin = -1,                 /* the amplifier is controlled by the PMIC, switched with amp() */
         .use_mclk = true,
-        .no_dac_ref = false,          /* kênh phải của bản ghi = ref số từ DAC */
+        .no_dac_ref = false,          /* right channel of the recording = digital ref from the DAC */
         .hw_gain = { .pa_voltage = 5.0, .codec_dac_voltage = 3.3 },
     };
     const audio_codec_if_t *codec = es8311_codec_new(&es_cfg);
@@ -154,10 +154,10 @@ static esp_err_t audio_init(void)
     return ESP_OK;
 }
 
-/* ---------- đo ---------- */
+/* ---------- measurement ---------- */
 typedef struct {
-    double raw_sq, ref_sq, out_sq;           /* tổng bình phương */
-    double raw_c, raw_s, out_c, out_s;       /* Goertzel tại TONE_HZ (chiếu lên cos/sin) */
+    double raw_sq, ref_sq, out_sq;           /* sum of squares */
+    double raw_c, raw_s, out_c, out_s;       /* Goertzel at TONE_HZ (projection on cos/sin) */
     long raw_n, out_n;
     int vad_speech, vad_n;
 } win_t;
@@ -172,7 +172,7 @@ extern const int16_t speech_start[] asm("_binary_speech_raw_start");
 extern const int16_t speech_end[] asm("_binary_speech_raw_end");
 static const esp_afe_sr_iface_t *s_iface;
 static esp_afe_sr_data_t *s_afe;
-static long s_raw_idx, s_out_idx;            /* chỉ số mẫu liên tục cho pha của Goertzel */
+static long s_raw_idx, s_out_idx;            /* running sample index for the Goertzel phase */
 
 static int cur_sec(void)
 {
@@ -181,7 +181,7 @@ static int cur_sec(void)
     return s < 0 ? 0 : (s > T_TOTAL ? T_TOTAL : s);
 }
 
-/* 1 kHz ở 16 kHz = đúng 16 mẫu mỗi chu kỳ: dùng bảng, tránh sin/cos kiểu double (S3 chỉ có FPU float) */
+/* 1 kHz at 16 kHz = exactly 16 samples per cycle: use a table and avoid double sin/cos (the S3 only has a float FPU) */
 #define TBL 16
 static float s_cos[TBL], s_sin[TBL];
 static int16_t s_tone_tbl[TBL];
@@ -198,7 +198,7 @@ static void tables_init(void)
 
 static void audio_task(void *arg)
 {
-    const int chunk = (int)(intptr_t)arg;             /* số mẫu mỗi kênh */
+    const int chunk = (int)(intptr_t)arg;             /* samples per channel */
     int16_t *in = heap_caps_malloc(chunk * 2 * sizeof(int16_t), MALLOC_CAP_INTERNAL);
     int16_t *out = heap_caps_malloc(chunk * 2 * sizeof(int16_t), MALLOC_CAP_INTERNAL);
     long tone_idx = 0;
@@ -269,7 +269,7 @@ static void fetch_task(void *arg)
 static double db(double x) { return 20.0 * log10(x > 1e-9 ? x : 1e-9); }
 static double tone_amp(double c, double s, long n) { return n ? 2.0 * sqrt(c * c + s * s) / n : 0; }
 
-/* CPU: phần trăm idle của từng core trong một khoảng */
+/* CPU: idle percentage of each core over an interval */
 typedef struct { uint32_t idle[2]; uint32_t total; } cpu_t;
 static void cpu_sample(cpu_t *c)
 {
@@ -344,7 +344,7 @@ static void run_config(const cfg_t *c)
     vTaskDelay(pdMS_TO_TICKS(300));
     amp(false);
 
-    double dt = (double)(c1.total - c0.total);              /* thời gian chạy của một core */
+    double dt = (double)(c1.total - c0.total);              /* run time of one core */
     printf("cpu raw: total=%u idle0=%u idle1=%u\n", (unsigned)dt, (unsigned)(c1.idle[0] - c0.idle[0]), (unsigned)(c1.idle[1] - c0.idle[1]));
     double idle0 = 100.0 * (c1.idle[0] - c0.idle[0]) / (dt > 0 ? dt : 1);
     double idle1 = 100.0 * (c1.idle[1] - c0.idle[1]) / (dt > 0 ? dt : 1);
@@ -368,7 +368,7 @@ static void run_config(const cfg_t *c)
         for (int k = 6; k <= 7; k++) { fe_m += s_win[k].raw_sq / s_win[k].raw_n / 2; fe_o += s_win[k].out_sq / (s_win[k].out_n ? s_win[k].out_n : 1) / 2; }
         for (int k = 10; k <= 14; k++) { dt_m += s_win[k].raw_sq / s_win[k].raw_n / 5; dt_o += s_win[k].out_sq / (s_win[k].out_n ? s_win[k].out_n : 1) / 5; dt_v += s_win[k].vad_speech; dt_vn += s_win[k].vad_n; }
         for (int k = 17; k <= 19; k++) fl += s_win[k].out_sq / (s_win[k].out_n ? s_win[k].out_n : 1) / 3;
-        double near_est = dt_m > fe_m ? dt_m - fe_m : 0;      /* năng lượng giọng người ước lượng = mic(DT) - dội âm (FE-only) */
+        double near_est = dt_m > fe_m ? dt_m - fe_m : 0;      /* estimated human-voice energy = mic(DT) - echo (far-end only) */
         snprintf(s_summary[s_nsum < 4 ? s_nsum : 3], sizeof(s_summary[0]), "DOUBLETALK %s: far-end-only(s6-7) mic=%.0f out=%.0f RMS | double-talk(s10-14) mic=%.0f out=%.0f RMS vad=%d%% | near-end est=%.0f RMS | out/near=%.1f dB | silence floor out=%.0f", c->name, sqrt(fe_m), sqrt(fe_o), sqrt(dt_m), sqrt(dt_o), dt_vn ? 100 * dt_v / dt_vn : 0, sqrt(near_est), near_est > 1 ? 10 * log10((dt_o > 1 ? dt_o : 1) / near_est) : 0.0, sqrt(fl));
         s_nsum++;
         printf("DOUBLETALK %s: far-end-only(s6-7) mic=%.0f out=%.0f RMS | double-talk(s10-14) mic=%.0f out=%.0f RMS vad=%d%% | near-end est=%.0f RMS | out/near=%.1f dB | silence floor out=%.0f\n",
@@ -411,7 +411,7 @@ void app_main(void)
         { "FD_LOW",  AFE_TYPE_FD, AFE_MODE_LOW_COST,  true },
         { "FD_HIGH", AFE_TYPE_FD, AFE_MODE_HIGH_PERF, true },
         { "VC_LOW",  AFE_TYPE_VC, AFE_MODE_LOW_COST,  true },
-        { "SR_LOW_NOAEC", AFE_TYPE_SR, AFE_MODE_LOW_COST, false },   /* chứng: không AEC */
+        { "SR_LOW_NOAEC", AFE_TYPE_SR, AFE_MODE_LOW_COST, false },   /* control: no AEC */
     };
 #endif
     for (size_t i = 0; i < sizeof(cfgs) / sizeof(cfgs[0]); i++) {

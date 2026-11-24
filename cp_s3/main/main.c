@@ -30,9 +30,9 @@ void app_main(void)
     /* create default event loop */
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
-    /* audio_fe sau NVS: P4 có thể gọi esp_wifi_init qua RPC ngay lúc này, nó cần NVS đã sẵn sàng */
+    /* audio_fe after NVS: the P4 may call esp_wifi_init over RPC right now, and that needs NVS ready */
 #if CONFIG_AUDIO_FE_ENABLE
-    /* StickS3: ES8311 + AFE + I2S link tới P4 (cũng tắt ampli loa lúc khởi động) */
+    /* StickS3: ES8311 + AFE + I2S link to the P4 (also switches the speaker amplifier off at start-up) */
     ESP_ERROR_CHECK_WITHOUT_ABORT(audio_fe_start());
 #endif
 }

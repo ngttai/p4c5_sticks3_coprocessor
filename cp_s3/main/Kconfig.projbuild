@@ -1,26 +1,26 @@
 menu "StickS3 audio_fe"
 
     config AUDIO_FE_ENABLE
-        bool "Chạy audio_fe (ES8311 + AFE + I2S link tới P4)"
+        bool "Run audio_fe (ES8311 + AFE + I2S link to the P4)"
         default y
 
     config AUDIO_FE_BYPASS
-        bool "Bypass AFE: gửi mic thô lên link (kiểm dây I2S trước khi bật AFE)"
+        bool "Bypass the AFE: send the raw mic to the link (check the I2S wiring before enabling the AFE)"
         depends on AUDIO_FE_ENABLE
         default n
 
     config AUDIO_FE_AMP_ALWAYS_ON
-        bool "Ampli luôn bật (chỉ để đo độ trễ, tránh tiếng bụp lúc bật/tắt)"
+        bool "Amplifier always on (latency measurements only; avoids pops when it switches)"
         depends on AUDIO_FE_ENABLE
         default n
 
     config AUDIO_FE_LINK_ECHO
-        bool "Link echo: trả playback của P4 ngược lại P4 (đo độ trễ điện của link, không qua loa/mic)"
+        bool "Link echo: return the P4 playback to the P4 (electrical link latency, not through speaker/mic)"
         depends on AUDIO_FE_ENABLE
         default n
 
     config AUDIO_FE_FD_HIGH
-        bool "AFE_TYPE_FD + HIGH_PERF (ngược lại FD LOW_COST)"
+        bool "AFE_TYPE_FD + HIGH_PERF (otherwise FD LOW_COST)"
         depends on AUDIO_FE_ENABLE && !AUDIO_FE_BYPASS
         default y
 

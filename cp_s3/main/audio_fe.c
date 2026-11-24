@@ -1,13 +1,13 @@
 /*
- * audio_fe cho StickS3 (co-processor của P4C5), giai đoạn 5 của plan.
+ * audio_fe for the StickS3 (co-processor of the P4C5), phase 5 of the plan.
  *
- *   ES8311 (I2S0, 16 kHz, L = mic, R = ref số của DAC)
- *      -> codec_task (core 1) -> AFE (FD, AEC/NS/VAD, chạy ngay trong feed/fetch) -> fetch_task (core 1)
- *      -> txq -> link_task (core 0) -> I2S1 master -> P4 (L = mic sạch, R = bộ đếm khung)
+ *   ES8311 (I2S0, 16 kHz, L = mic, R = digital DAC reference)
+ *      -> codec_task (core 1) -> AFE (FD, AEC/NS/VAD, runs inside feed/fetch) -> fetch_task (core 1)
+ *      -> txq -> link_task (core 0) -> I2S1 master -> P4 (L = clean mic, R = frame counter)
  *   P4 -> I2S1 (L = playback) -> link_task -> rxq -> codec_task -> ES8311 -> loa
  *
- * Hai miền clock (I2S0 và I2S1) đều do S3 làm master nhưng độc lập, nên giữa chúng có stream buffer;
- * bộ đếm underrun/overrun cho biết chúng có trôi lệch nhau không.
+ * The two clock domains (I2S0 and I2S1) are both mastered by the S3 but are independent, so a stream buffer sits between them;
+ * the underrun/overrun counters show whether they drift apart.
  */
 #include <math.h>
 #include <stdatomic.h>
@@ -42,10 +42,10 @@ static const char *TAG = "audio_fe";
 #define SAMPLE_RATE   16000
 #define SPK_VOLUME    100
 #define MIC_GAIN_DB   24.0f
-#define LINK_CHUNK    128          /* khung I2S1 mỗi lần (8 ms) */
-#define LINK_DMA_DESC 4            /* 4 x 8 ms = 32 ms đệm DMA */
+#define LINK_CHUNK    128          /* I2S1 frames per transfer (8 ms) */
+#define LINK_DMA_DESC 4            /* 4 x 8 ms = 32 ms of DMA buffer */
 #define QUEUE_SAMPLES 8192         /* ~0,5 s */
-#define PLAYBACK_MAGIC 0xA55A      /* kênh R của khung playback từ P4 */
+#define PLAYBACK_MAGIC 0xA55A      /* R channel of playback frames from the P4 */
 
 /* codec ES8311 (I2S0) */
 #define PIN_SDA  47
@@ -55,11 +55,11 @@ static const char *TAG = "audio_fe";
 #define PIN_WS   15
 #define PIN_DOUT 14
 #define PIN_DIN  16
-/* link tới P4 (I2S1, S3 là master) */
+/* link to the P4 (I2S1, the S3 is master) */
 #define LINK_BCLK 43
 #define LINK_WS   44
-#define LINK_DOUT 4     /* mic sạch -> P4 GPIO48 */
-#define LINK_DIN  3     /* playback từ P4 GPIO49; G3 là chân strapping, chỉ làm ngõ vào */
+#define LINK_DOUT 4     /* clean mic -> P4 GPIO48 */
+#define LINK_DIN  3     /* playback from P4 GPIO49; G3 is a strapping pin, input only */
 
 #define PMIC_ADDR     0x6E
 #define PMIC_GPIO_DIR 0x10
@@ -192,7 +192,7 @@ static esp_err_t link_init(void)
     return ESP_OK;
 }
 
-/* link_task (core 0): ghi khung L = mic sạch, R = bộ đếm 16 bit; đọc playback từ P4 */
+/* link_task (core 0): writes frames with L = clean mic, R = 16-bit counter; reads playback from the P4 */
 static void link_task(void *arg)
 {
     int16_t *txb = heap_caps_malloc(LINK_CHUNK * 2 * sizeof(int16_t), MALLOC_CAP_INTERNAL | MALLOC_CAP_DMA);
@@ -216,8 +216,8 @@ static void link_task(void *arg)
         for (int i = 0; i < LINK_CHUNK; i++) { txb[i * 2] = mono[i]; txb[i * 2 + 1] = (int16_t)counter++; }
         i2s_channel_write(s_link_tx, txb, LINK_CHUNK * 2 * sizeof(int16_t), &n, 200);
         if (i2s_channel_read(s_link_rx, rxb, LINK_CHUNK * 2 * sizeof(int16_t), &n, 200) == ESP_OK && n == LINK_CHUNK * 2 * sizeof(int16_t)) {
-            /* P4 gắn magic 0xA55A vào kênh R của mọi khung playback hợp lệ; G3 để hở/không có P4 thì đọc rác,
-             * rác không có magic nên bị coi là im lặng (không bật ampli, không phát tạp âm) */
+            /* The P4 puts the magic 0xA55A in the R channel of every valid playback frame; with G3 floating or no P4 it reads garbage,
+             * and garbage has no magic, so it is treated as silence (amplifier stays off, no noise played) */
             int magic = 0;
             for (int i = 0; i < LINK_CHUNK; i++) magic += (rxb[i * 2 + 1] == (int16_t)PLAYBACK_MAGIC);
             const bool valid = magic > LINK_CHUNK * 3 / 4;
@@ -270,7 +270,7 @@ static void fetch_task(void *arg)
         if (!r || r->ret_value == ESP_FAIL || !r->data) continue;
         if (xStreamBufferSend(s_txq, r->data, r->data_size, 0) < (size_t)r->data_size) atomic_fetch_add(&st.tx_drop, r->data_size / 2);
         atomic_fetch_add(&st.fetch_chunks, 1);
-        /* trễ AFE: từ lúc chunk chứa mẫu đầu ra được đọc xong khỏi codec đến lúc fetch trả về mẫu đó */
+        /* AFE lag: from when the chunk holding the output samples has been read from the codec to when fetch returns those samples */
         s_out_samples += r->data_size / 2;
         if (s_chunk > 0) {
             unsigned q = (unsigned)((s_out_samples - 1) / s_chunk);
@@ -287,7 +287,7 @@ static void fetch_task(void *arg)
 }
 #endif
 
-/* codec_task (core 1): playback -> loa, đọc mic + ref, feed AFE (hoặc bypass mic L lên link) */
+/* codec_task (core 1): playback -> speaker, reads mic + ref, feeds the AFE (or sends the L mic straight to the link in bypass) */
 static void codec_task(void *arg)
 {
     const int chunk = s_chunk > 0 ? s_chunk : 512;
@@ -298,7 +298,7 @@ static void codec_task(void *arg)
     while (1) {
         size_t got = xStreamBufferReceive(s_rxq, mono, chunk * sizeof(int16_t), 0) / sizeof(int16_t);
         if (got < (size_t)chunk) {
-            if (got) memmove(mono + (chunk - got), mono, got * sizeof(int16_t));   /* giữ phần cuối, đệm không ở đầu */
+            if (got) memmove(mono + (chunk - got), mono, got * sizeof(int16_t));   /* keep the tail, pad zeros at the front */
             memset(mono, 0, (chunk - got) * sizeof(int16_t));
             if (got) atomic_fetch_add(&st.rx_underrun, chunk - got); else if (s_amp_on) atomic_fetch_add(&st.rx_underrun, chunk);
         }
@@ -373,7 +373,7 @@ static void stats_task(void *arg)
 esp_err_t audio_fe_start(void)
 {
     ESP_RETURN_ON_ERROR(codec_init(), TAG, "codec");
-    /* 2 x 16 KB: để ở PSRAM, giữ RAM nội cho WiFi/hosted/AFE */
+    /* 2 x 16 KB: kept in PSRAM, leaving internal RAM for WiFi/hosted/AFE */
     s_txq = xStreamBufferCreateWithCaps(QUEUE_SAMPLES * sizeof(int16_t), 1, MALLOC_CAP_SPIRAM);
     s_rxq = xStreamBufferCreateWithCaps(QUEUE_SAMPLES * sizeof(int16_t), 1, MALLOC_CAP_SPIRAM);
     ESP_RETURN_ON_FALSE(s_txq && s_rxq, ESP_ERR_NO_MEM, TAG, "stream buffers");

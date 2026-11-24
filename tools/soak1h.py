@@ -1,6 +1,6 @@
-"""Soak: TCP RX rồi TX (mỗi nửa HALF giây, mặc định 1800) cùng link I2S và AFE.
-Dùng: P4_PORT=... S3_PORT=... PC_IP=... WS=<ssid> WP=<mật khẩu> python3 soak1h.py [giây_mỗi_nửa]
-Cần PC cùng mạng. Kết quả: $OUT_DIR/soak1h_summary.txt (mặc định thư mục tạm). Tên và mật khẩu WiFi được che trong log."""
+"""Soak: TCP RX then TX (HALF seconds each, default 1800) together with the I2S link and the AFE.
+Usage: P4_PORT=... S3_PORT=... PC_IP=... WS=<ssid> WP=<password> python3 soak1h.py [seconds_per_half]
+Needs a PC on the same network. Result: $OUT_DIR/soak1h_summary.txt (default: the temp directory). The WiFi name and password are masked in the log."""
 import os,serial,time,threading,sys,re,socket,os,statistics
 P4=os.environ['P4_PORT']
 S3=os.environ['S3_PORT']
@@ -39,7 +39,7 @@ def source():
     c.close()
 res={}
 def run(label,iperf_cmd,pc_fn):
-    cmd('linktest %d'%(HALF+15)); time.sleep(2)   # playback im lặng: link được kiểm, loa không phát tiếng
+    cmd('linktest %d'%(HALF+15)); time.sleep(2)   # silent playback: the link is exercised, the speaker makes no sound
     th=threading.Thread(target=pc_fn); th.start()
     cmd(iperf_cmd); o=rd(HALF+40,'iperf exit'); o+=rd(2)
     th.join(); o+=rd(20,'LINKTEST RESULT')

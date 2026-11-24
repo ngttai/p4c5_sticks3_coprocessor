@@ -74,7 +74,7 @@ void iperf_hook_show_wifi_stats(iperf_traffic_type_t type, iperf_status_t status
 
 void app_main(void)
 {
-    /* sticks3_coprocessor: giữ C5 trên P4C5 im (EN = GPIO54 thấp), WiFi đi qua StickS3 */
+    /* p4c5_sticks3_coprocessor: keep the C5 on the P4C5 idle (EN = GPIO54 low); WiFi goes through the StickS3 */
     gpio_config_t c5_en = {
         .pin_bit_mask = 1ULL << 54,
         .mode = GPIO_MODE_OUTPUT,
@@ -146,7 +146,7 @@ void app_main(void)
     app_register_iperf_hook_func(iperf_hook_show_wifi_stats);
     /* From ping-cmd */
     ping_cmd_register_ping();
-    /* I2S link tới StickS3 */
+    /* I2S link to the StickS3 */
     register_link_test();
 
 
