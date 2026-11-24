@@ -11,6 +11,7 @@ M5StickS3 (ESP32-S3) làm co-processor cho board KSDIY P4C5: **WiFi 2,4 GHz qua 
 | `afe_s3/` | AFE độc lập trên StickS3 (tone, giọng TTS, double-talk) dùng để chọn cấu hình AFE |
 | `phone_s3/` | Phone (Brookesia, LVGL) bản tinh giản: Cài đặt (WiFi, test mạng, âm lượng), Nhạc, Radio, Trợ lý |
 | `hw_specs/` | `hw_matrix.md` của P4C5, schematic và pin map StickS3 |
+| `tools/` | Script đo trên PC (soak, throughput, link, độ trễ) |
 | `docs/` | Kết quả, kiến trúc, sơ đồ đấu dây, giao thức link, hướng dẫn port, log đo |
 
 ## Đọc theo thứ tự
@@ -20,7 +21,7 @@ M5StickS3 (ESP32-S3) làm co-processor cho board KSDIY P4C5: **WiFi 2,4 GHz qua 
 3. [docs/WIRING.md](docs/WIRING.md): sơ đồ và bảng đấu dây.
 4. [docs/I2S_LINK.md](docs/I2S_LINK.md): giao thức link I2S.
 5. [docs/PORTING.md](docs/PORTING.md): port sang board P4 khác.
-6. [docs/logs/](docs/logs/): số đo từng giai đoạn.
+6. [docs/logs/](docs/logs/): số đo từng giai đoạn; script tạo ra chúng ở [tools/](tools/).
 
 ## Build
 
