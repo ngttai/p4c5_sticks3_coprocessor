@@ -1,0 +1,2 @@
+dependencies:
+  espressif/gmf_fft: "~1.1.0"

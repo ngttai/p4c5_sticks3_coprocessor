@@ -1,0 +1,5 @@
+Noto Sans CJK SC: Copyright 2014-2021 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'.
+Source: https://github.com/notofonts/noto-cjk
+
+Noto Sans CJK is licensed under the SIL Open Font License, Version 1.1; the license text is the same as in OFL.txt in this folder (Be Vietnam Pro).
+fonts/phone_font_cjk_20.c is a subset generated from it by tools/gen_lv_font_cjk.py.

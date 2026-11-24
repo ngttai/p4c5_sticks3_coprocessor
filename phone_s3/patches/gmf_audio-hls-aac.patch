@@ -1,0 +1,42 @@
+gmf_audio 1.1.0, for the Radio app (from MetalioClaw4): HLS .aac segments start with an ID3 tag; the stock
+decoder probe sees "ID3" and picks MP3. When AAC was asked for, skip the tag and trust AAC unless the data is clearly
+another container. Applied at configure time by CMakeLists.txt (managed_components/ is not in git).
+
+--- a/esp_gmf_audio_dec.c
++++ b/esp_gmf_audio_dec.c
+@@ -416,7 +416,34 @@
+     }
+     if (audio_dec->is_opened == false && audio_dec->in_data.len > 0) {
+         esp_audio_simple_dec_cfg_t *dec_cfg = (esp_audio_simple_dec_cfg_t *)OBJ_GET_CFG(self);
+-        esp_audio_simple_dec_type_t dec_type = audio_dec_detect_type(audio_dec->in_data.buffer, audio_dec->in_data.len, dec_cfg->dec_type);
++        /* Local patch: HLS .aac segments start with an ID3 tag (timestamp PRIV frame). The
++         * stock detector sees "ID3" and picks MP3 although the payload is ADTS AAC.
++         * When AAC was requested, skip the ID3 tag first so the AAC probe succeeds. */
++        if (dec_cfg->dec_type == ESP_AUDIO_SIMPLE_DEC_TYPE_AAC && audio_dec->in_data.len >= 10 &&
++            MATCH_HEADER(audio_dec->in_data.buffer, 0, "ID3")) {
++            const uint8_t *b = audio_dec->in_data.buffer;
++            uint32_t tag = 10 + (((uint32_t)(b[6] & 0x7F) << 21) | ((uint32_t)(b[7] & 0x7F) << 14) |
++                                 ((uint32_t)(b[8] & 0x7F) << 7) | (uint32_t)(b[9] & 0x7F));
++            if (tag < audio_dec->in_data.len &&
++                audio_dec_check_type(b + tag, audio_dec->in_data.len - tag, ESP_AUDIO_SIMPLE_DEC_TYPE_AAC)) {
++                audio_dec->in_data.buffer += tag;
++                audio_dec->in_data.len -= tag;
++                ESP_LOGI(TAG, "Skipped ID3 tag (%lu bytes) before AAC", (unsigned long)tag);
++            }
++        }
++        esp_audio_simple_dec_type_t dec_type;
++        /* Local patch: for raw AAC (HLS ADTS segments) trust the requested type unless the data is
++         * clearly a different container. The stock sniffer may fall through to MP3. */
++        if (dec_cfg->dec_type == ESP_AUDIO_SIMPLE_DEC_TYPE_AAC &&
++            !audio_dec_check_type(audio_dec->in_data.buffer, audio_dec->in_data.len, ESP_AUDIO_SIMPLE_DEC_TYPE_WAV) &&
++            !audio_dec_check_type(audio_dec->in_data.buffer, audio_dec->in_data.len, ESP_AUDIO_SIMPLE_DEC_TYPE_FLAC) &&
++            !audio_dec_check_type(audio_dec->in_data.buffer, audio_dec->in_data.len, ESP_AUDIO_SIMPLE_DEC_TYPE_M4A) &&
++            !audio_dec_check_type(audio_dec->in_data.buffer, audio_dec->in_data.len, ESP_AUDIO_SIMPLE_DEC_TYPE_OGG) &&
++            !audio_dec_check_type(audio_dec->in_data.buffer, audio_dec->in_data.len, ESP_AUDIO_SIMPLE_DEC_TYPE_TS)) {
++            dec_type = ESP_AUDIO_SIMPLE_DEC_TYPE_AAC;
++        } else {
++            dec_type = audio_dec_detect_type(audio_dec->in_data.buffer, audio_dec->in_data.len, dec_cfg->dec_type);
++        }
+         if (dec_type != ESP_AUDIO_SIMPLE_DEC_TYPE_NONE) {
+             if (dec_cfg->dec_type != dec_type) {
+                 esp_gmf_info_sound_t aud_info = {

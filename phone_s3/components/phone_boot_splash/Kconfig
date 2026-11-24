@@ -1,0 +1,17 @@
+menu "Phone boot splash"
+
+    choice PHONE_BOOT_SPLASH
+        prompt "Boot splash"
+        default PHONE_BOOT_SPLASH_SIMPLE
+        help
+            Shown from the display start until the phone is ready.
+
+        config PHONE_BOOT_SPLASH_LOGO
+            bool "Logo animation (splash.bin, about 900 KB of flash)"
+        config PHONE_BOOT_SPLASH_SIMPLE
+            bool "Simple: a hand-drawn line, then a greeting"
+        config PHONE_BOOT_SPLASH_NONE
+            bool "None"
+    endchoice
+
+endmenu

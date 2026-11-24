@@ -1,0 +1,15 @@
+--- a/uvc_descriptor_parsing.c	2026-11-20 16:33:45.431146626 +0700
++++ b/uvc_descriptor_parsing.c	2026-11-20 16:33:45.462438136 +0700
+@@ -140,6 +140,12 @@
+         UVC_CHECK(ep_desc, ESP_ERR_NOT_FOUND);
+ 
+         // Here we look for an interface that offers the largest MPS that is not larger than requested MPS
++        /* Local patch: the ESP-IDF DWC host never programs HCCHAR.EC (multi count), so a high-bandwidth
++         * ISOC endpoint (2-3 transactions per microframe) is read one packet per microframe and the stream
++         * desynchronises ("EOH bit not set"). Use only single-transaction alternate settings. */
++        if (USB_EP_DESC_GET_XFERTYPE(ep_desc) == USB_BM_ATTRIBUTES_XFER_ISOC && USB_EP_DESC_GET_MULT(ep_desc) > 0) {
++            continue;
++        }
+         const uint8_t packets_per_frame = USB_EP_DESC_GET_MULT(ep_desc) + 1;
+         const uint16_t current_mps = USB_EP_DESC_GET_MPS(ep_desc) * packets_per_frame;
+         if (current_mps >= last_mps && current_mps <= dwMaxPayloadTransferSize) {

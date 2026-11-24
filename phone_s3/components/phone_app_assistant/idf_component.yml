@@ -1,0 +1,5 @@
+dependencies:
+  # Opus encoder and decoder
+  espressif/esp_audio_codec: "^2.5"
+  # Wake word (WakeNet); the model goes to the "model" partition
+  espressif/esp-sr: "~2.4.4"

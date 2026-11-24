@@ -1,0 +1,43 @@
+version: "0.2.1"
+description: Board Support Package (BSP) for the KSDIY ESP32-P4/C5 4.3" board, following esp-bsp conventions
+
+targets:
+  - esp32p4
+
+tags:
+  - bsp
+
+dependencies:
+  # Only built and run on ESP-IDF v6.1 so far.
+  idf: ">=6.1"
+
+  lvgl/lvgl:
+    version: "^9"
+    public: true
+
+  espressif/esp_lvgl_adapter:
+    version: "^0.6.2"
+    public: true
+
+  espressif/esp_lcd_touch:
+    version: "^1"
+    public: true
+
+  kevincoooool/esp_lcd_st7102: "^1.0.1"
+  kevincoooool/esp_lcd_touch_st7123: "~1.0.2"
+  kevincoooool/pmic_axp2101: "^1.0.0"
+  espressif/led_strip: "^3"
+  espressif/button:
+    version: ">=4,<5.0"
+    public: true
+  espressif/esp_codec_dev:
+    version: "~1.5"
+    public: true
+  espressif/esp_audio_effects:
+    version: ">=1.2"
+  espressif/esp_video:
+    version: "^2.1.0"
+    public: true
+  espressif/esp_hosted:
+    version: "==3.1.0"
+    public: true

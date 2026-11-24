@@ -1,0 +1,23 @@
+# ESP-IDF build output
+build/
+managed_components/
+dependencies.lock
+
+# Per-developer sdkconfig (keep sdkconfig.defaults in git)
+sdkconfig
+sdkconfig.old
+
+# Editors and OS files
+.vscode/
+.idea/
+.claude/
+*.swp
+*~
+.DS_Store
+
+# Python and tooling caches
+__pycache__/
+*.pyc
+
+# Local scratch
+*.log

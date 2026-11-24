@@ -1,0 +1,22 @@
+{
+  "stations": [
+    { "name": "VOV1", "url": "https://str.vov.gov.vn/vovlive/vov1vov5Vietnamese.sdp_aac/playlist.m3u8" },
+    { "name": "VOV2", "url": "https://audio-lss.vov.vn/live/vov2.m3u8" },
+    { "name": "VOV3", "url": "https://audio-lss.vov.vn/live/vov3.m3u8" },
+    { "name": "VOV Giao thông Hà Nội", "url": "https://play.vovgiaothong.vn/live/gthn/playlist.m3u8" },
+    { "name": "VOV Giao thông TP.HCM FM91", "url": "https://play.vovgiaothong.vn/live/gthcm/playlist.m3u8" },
+    { "name": "VOH FM99.9 TP.HCM", "url": "https://1011337676.vnns.net/-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmkiOiIvaHR2Yy9WT0gtRk05OS45LmFkbS50bXMvIiwiZXhwIjoxOTI0OTI1MjI4fQ.zVLoKcCW3tFLySpEQHcYh11PHIxk2ZE1pj5P-GFIm1I-/htvc/VOH-FM99.9.adm.tms/playlist.m3u8" },
+    { "name": "VOH FM95.6 TP.HCM", "url": "https://1011337676.vnns.net/-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmkiOiIvaHR2Yy9WT0gtRk05NS42LmFkbS50bXMvIiwiZXhwIjoxOTI0OTI1MjI4fQ.isr2nlUkXOPGSxT-KT8FcZQFCcXn58RZrCyqoB3zDGg-/htvc/VOH-FM95.6.adm.tms/playlist.m3u8" },
+    { "name": "VOH FM92.5 TP.HCM", "url": "https://1011337676.vnns.net/-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmkiOiIvaHR2Yy9WT0gtRk05Mi41LmFkbS50bXMvIiwiZXhwIjoxOTI0OTI1MjI4fQ.u5XcdU9KljAz3HgehDbCBbNEvSzWNAQTEKkU-DwH2K8-/htvc/VOH-FM92.5.adm.tms/playlist.m3u8" },
+    { "name": "VOH FM87.7 TP.HCM", "url": "https://1011337676.vnns.net/-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmkiOiIvaHR2Yy9WT0gtRk04Ny43LmFkbS50bXMvIiwiZXhwIjoxOTI0OTI1MjI4fQ.uqGbd46T32wvTu5qrL2cOng9Vsf7ZHbSTE10PHpP2bE-/htvc/VOH-FM87.7.adm.tms/playlist.m3u8" },
+    { "name": "VOH AM610 TP.HCM", "url": "https://1011337676.vnns.net/-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmkiOiIvaHR2Yy9WT0gtQU02MTAuYWRtLnRtcy8iLCJleHAiOjE5MjQ5MjUyMjh9.dAa1es3LlAVnvQ-oLGNBqfEI0yz7fPrjEML_rJAklMQ-/htvc/VOH-AM610.adm.tms/playlist.m3u8" },
+    { "name": "Vĩnh Long FM90.2", "url": "https://radiovietnamonline.com/api/v3/radios/phatthanh/radio-vinhlong.m3u8" },
+    { "name": "Đồng Tháp FM98.4", "url": "http://64d0d74b76158.streamlock.net:1935/THDTR/thdtradio/playlist.m3u8" },
+    { "name": "Long An FM96.9", "url": "https://cdn.la34.com.vn/live/2851dd3d9016ac74d84b0c4a7a659f76891/playlist.m3u8" },
+    { "name": "KEXP 90.3 Seattle (nhạc)", "url": "https://kexp.streamguys1.com/kexp160.aac" },
+    { "name": "NPR (tin tức, tiếng Anh)", "url": "https://npr-ice.streamguys1.com/live.mp3" },
+    { "name": "BBC World Service", "url": "http://stream.live.vc.bbcmedia.co.uk/bbc_world_service" },
+    { "name": "SomaFM Groove Salad", "url": "https://ice1.somafm.com/groovesalad-128-mp3" },
+    { "name": "Radio Paradise", "url": "https://stream.radioparadise.com/mp3-128" }
+  ]
+}

@@ -1,0 +1,132 @@
+menu "Board Support Package (KSDIY ESP32-P4/C5)"
+
+    config BSP_ERROR_CHECK
+        bool "Enable error check in BSP"
+        default y
+        help
+            Error check assert the application before returning the error code.
+
+    config BSP_AUDIO_S3_LINK
+        bool "Audio through the ESP32-S3 co-processor (I2S link on JP1)"
+        default y
+        help
+            Microphone and speaker are the S3's (ES8311 + AFE with echo cancellation); the on-board ES8311 and ES7210
+            are not used. The apps keep using bsp_audio_codec_speaker_init() / bsp_audio_codec_microphone_init().
+
+    menu "I2C"
+        config BSP_I2C_NUM
+            int "I2C peripheral index"
+            default 0
+            range 0 1
+            help
+                ESP32-P4 has two I2C peripherals, pick the one you want to use.
+                Touch, PMIC, audio codecs, IMU and camera SCCB all sit on this bus.
+
+        config BSP_I2C_FAST_MODE
+            bool "Enable I2C fast mode"
+            default y
+            help
+                I2C has two speed modes: normal (100kHz) and fast (400kHz).
+
+        config BSP_I2C_CLK_SPEED_HZ
+            int
+            default 400000 if BSP_I2C_FAST_MODE
+            default 100000
+    endmenu
+
+    menu "PMIC (AXP2101)"
+        config BSP_PMIC_SET_CHARGER
+            bool "Program the battery charger in bsp_battery_init()"
+            default n
+            help
+                Off: keep the charge current and voltage already in the AXP2101 (its defaults,
+                or what an earlier program wrote). On: write the values below. Pick them from
+                the battery datasheet; a charge current above the battery rating is unsafe.
+
+        config BSP_PMIC_CHARGE_CURRENT_MA
+            int "Constant charge current (mA)"
+            depends on BSP_PMIC_SET_CHARGER
+            range 200 1000
+            default 500
+            help
+                Rounded down to the charger step (100 mA from 200 mA up).
+
+        choice BSP_PMIC_CHARGE_VOLTAGE
+            prompt "Charge target voltage"
+            depends on BSP_PMIC_SET_CHARGER
+            default BSP_PMIC_CHARGE_VOLTAGE_4V20
+            config BSP_PMIC_CHARGE_VOLTAGE_4V10
+                bool "4.10 V"
+            config BSP_PMIC_CHARGE_VOLTAGE_4V20
+                bool "4.20 V (standard Li-ion / LiPo)"
+            config BSP_PMIC_CHARGE_VOLTAGE_4V35
+                bool "4.35 V (high voltage LiPo)"
+            config BSP_PMIC_CHARGE_VOLTAGE_4V40
+                bool "4.40 V (high voltage LiPo)"
+        endchoice
+
+        config BSP_PMIC_CHARGE_VOLTAGE_REG
+            int
+            depends on BSP_PMIC_SET_CHARGER
+            default 2 if BSP_PMIC_CHARGE_VOLTAGE_4V10
+            default 3 if BSP_PMIC_CHARGE_VOLTAGE_4V20
+            default 4 if BSP_PMIC_CHARGE_VOLTAGE_4V35
+            default 5 if BSP_PMIC_CHARGE_VOLTAGE_4V40
+    endmenu
+
+    menu "SPIFFS"
+        config BSP_SPIFFS_FORMAT_ON_MOUNT_FAIL
+            bool "Format SPIFFS if mounting fails"
+            default n
+
+        config BSP_SPIFFS_MOUNT_POINT
+            string "SPIFFS mount point"
+            default "/spiffs"
+
+        config BSP_SPIFFS_PARTITION_LABEL
+            string "Partition label of SPIFFS"
+            default "storage"
+
+        config BSP_SPIFFS_MAX_FILES
+            int "Max files supported for SPIFFS VFS"
+            default 5
+    endmenu
+
+    menu "microSD card"
+        config BSP_SD_MOUNT_POINT
+            string "Mount point of the microSD card in the VFS"
+            default "/sdcard"
+    endmenu
+
+    menu "Display"
+        choice BSP_LCD_COLOR_FORMAT
+            prompt "Select LCD color format"
+            default BSP_LCD_COLOR_FORMAT_RGB565
+            help
+                Pixel format of the MIPI DPI frame buffer.
+                It must match the LVGL color depth (RGB565 = 16 bit, RGB888 = 24 bit);
+                a mismatch is rejected at compile time.
+
+            config BSP_LCD_COLOR_FORMAT_RGB565
+                bool "RGB565"
+            config BSP_LCD_COLOR_FORMAT_RGB888
+                bool "RGB888"
+        endchoice
+
+        config BSP_DISPLAY_BRIGHTNESS_LEDC_CH
+            int "LEDC channel index"
+            default 1
+            range 0 7
+            help
+                LEDC channel is used to generate PWM signal that controls display brightness.
+                Set LEDC index that should be used.
+
+        config BSP_DISPLAY_LVGL_TASK_STACK_SIZE
+            int "LVGL task stack size (bytes)"
+            default 16384
+            range 4096 131072
+            help
+                Stack size of the LVGL task created by bsp_display_start().
+    endmenu
+
+endmenu

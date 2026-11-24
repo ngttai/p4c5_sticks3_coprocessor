@@ -1,0 +1,246 @@
+
+    m5-docs
+        Solution  
+ Store  
+ Software  
+ Documentation  
+ About Us  
+ Contact  
+       English  English 简体中文 日本語 CONTENTS
+      No Results Found Hot Searches 
+            Camera
+            WiFi
+            RS485
+            RS232
+            Relay
+            LoRaWAN
+            GPS
+            NB-IoT
+            LTE
+            GSM
+            Zigbee
+            Servo
+            StepMotor
+            Ethernet
+            E-Paper
+      Product
+      Contents
+      Search
+  StickS3
+ SKU:K150
+      Description
+ StickS3 is a compact and high-performance programmable controller designed for remote control and IoT applications. It is powered by the ESP32-S3-PICO-1-N8R8 main control chip, supporting 2.4 GHz Wi-Fi wireless communication, with built-in 8MB Flash and 8MB PSRAM to meet diverse application development needs, delivering excellent performance and scalability.
+For human–machine interaction, it features a 1.14" LCD display, a 6-axis IMU sensor, and programmable buttons. The audio system adopts the ES8311 mono audio codec, combined with a high-sensitivity MEMS microphone and AW8737 power amplifier, enabling clear audio capture and high-fidelity audio output, empowering voice recognition and interactive experiences. It also integrates IR transmitter and receiver, a 250mAh lithium battery, making it suitable for smart home control, AI voice assistants, and IoT project development scenarios.
+Tutorial
+  Arduino IDE Arduino IDE  This tutorial introduces how to program and control the StickS3 device using the Arduino IDE.   UiFlow2 UiFlow2  This tutorial will introduce how to control the StickS3 device through the UiFlow2 graphical programming platform.   StickS3 Xiaozhi Voice Assistant StickS3 Xiaozhi Voice Assistant  This tutorial introduces how to use the StickS3 device to flash the Xiaozhi voice assistant firmware via M5Burner and build a personal voice assistant application.   StickS3 ESP-Claw Firmware Flashing StickS3 ESP-Claw Firmware Flashing  This tutorial introduces how to flash the ESP-Claw firmware onto the StickS3, enabling users to quickly configure their StickS3 as an intelligent terminal capable of AI interaction, hardware programming, and automation control.   StickS3 GeaStack Firmware Flashing StickS3 GeaStack Firmware Flashing  This project demonstrates the hardware port of the GeaStack framework for the M5Stack StickS3. Note
+ EXT_5V_EN Input Power Supply Notice   The device 5V power interface can be configured as DC 5V output / input mode. The interface defaults to input mode. In this state, DC 5V power can be supplied via the Grove interface, the EXT_5V on the top Hat2-Bus, or the 5VIN interface. When configured to output mode, power input is only allowed via USB or the 5VIN on the top Hat2-Bus. Do not supply power through other output interfaces, otherwise there is a risk of short circuit and device damage. Infrared Reception Notes   1.The infrared receiving and decoding of StickS3 must use the ESP32 RMT peripheral and does not support receiving and decoding via GPIO method. 2. When using the infrared receiver function, the speaker amplifier must be turned off; otherwise, reception will not work properly. The operation method can be referenced in the tutorial 3. Ensure that the transmitter and receiver are aligned as directly as possible, and keep a distance of no less than 30 cm between them. If the distance is too short, abnormal reception may occur. Speaker Volume Notice   When powered by battery (USB not connected), it is recommended to keep the speaker volume below 75% to avoid unexpected device reboot caused by excessive power consumption. Abnormal Device Noise   Early batches of StickS3 may produce slight abnormal noise after startup, which does not affect functional use. Precautions for Use   Do not disassemble the product enclosure without authorization. Disassembly may damage the antenna PFC circuit and affect normal device operation.Features
+ Integrated ESP32-S3-PICO-1-N8R8 main controller
+ 8MB Flash and 8MB PSRAM
+ ES8311 mono audio codec chip
+ MEMS microphone + speaker
+ Integrated IR transmitter + IR receiver
+ Magnetic back design
+ Expansion interfaces:Expandable Hat2 bus (2.54-16P)
+ HY2.0-4P interface
+ Development PlatformArduino
+ UiFlow2
+ ESP-IDF
+ PlatformIO
+ Includes
+ 1 x StickS3
+ Applications
+ Smart home control
+ AI voice assistant
+ IoT project development
+ Specifications
+ Specification |  Parameter | 
+SoC |  ESP32-S3-PICO-1-N8R8 @ Xtensa® 32-bit LX7 dual-core processor, clock frequency 240MHz | 
+ Flash |  8MB | 
+ PSRAM |  8MB Octal | 
+ IMU |  BMI270 | 
+ Wi-Fi |  2.4 GHz Wi-Fi | 
+ Display |  Model: ST7789P3Resolution: 135x240 | 
+ Input Power |  USB Type-C DC 5V | 
+ Audio Codec |  ES8311: 24-bit resolution, I2S protocol | 
+ Microphone |  MEMS microphone, Signal-to-Noise Ratio (SNR): 65 dB | 
+ Speaker |  AW8737 power amplifier + 8Ω@1W 2011 cavity speaker | 
+ Operating Temperature |  0 ~ 40°C | 
+ Battery Capacity |  250mAh | 
+ Grove Load Capacity |  No load: 5VMax: 4.88V@0.38A | 
+ Power Consumption |  Power off: 4.2V@14.02uAL1 state: 4.2V@52.47uAL2 state: 4.2V@102.40uAL3A state: 4.2V@36.69mAFull load: 4.2V@519.02mA | 
+ Product Size |  48.0 x 24.0 x 15.0mm | 
+ Product Weight |  20.0g | 
+ Package Size |  65.0 x 25.0 x 15.0mm | 
+ Gross Weight |  22.4g | 
+Learn
+ Compatibility Notes
+ StickS3 is structurally incompatible with the following Hat series products: Hat Mini JoyC (SKU: U156), Hat Mini EncoderC (SKU: U157), and Hat 18650C (SKU: U080).
+Power On/Off
+ Single click the power button: Power on / Reset
+ Double-click the power button: Power off
+  Download Mode
+ Connect the device to a computer via a USB Type-C data cable. Press and hold the power button until the green LED blinks, then release it. The device enters download mode.
+ EXT_5V_EN
+ In the default initialization of M5Unified, EXT_5V_EN is disabled. This operation turns off the power supply to the Grove, Hat EXT_5V interfaces, and IR TX/RX, and switches them to input mode. In this state, an external 5V power input is required for IR TX/RX to operate properly. For use cases without an external power supply, you can re-enable the EXT_5V output mode through the following API to restore power to IR TX/RX.
+ M5.Power.setExtOutput(true); // EXT_5V OUTPUT
+// M5.Power.setExtOutput(false); // EXT_5V INPUT M5.Power.setExtOutput(true); // EXT_5V OUTPUT
+// M5.Power.setExtOutput(false); // EXT_5V INPUT  IMU Triaxial Direction Schematic Diagram
+  Schematics
+ StickS3 Schematics PDF
+      1/4  PinMap
+ LCD
+ ESP32‑S3 |  G39 |  G40 |  G45 |  G41 |  G21 |  G38 | 
+ST7789P3 |  MOSI |  SCK |  RS |  CS |  RST |  BL | 
+IMU & M5PM1
+ ESP32‑S3 |  G48 |  G47 | 
+BMI270 (0x68) |  SCL |  SDA | 
+ M5PM1 (0x6e) |  SCL |  SDA | 
+M5PM1
+ M5PM1 |  G0 |  G1 |  G2 |  G3 |  G4 | 
+Battery Charge |  PYG0_CHG_STAT |   |   |   |   | 
+ ESP32-S3 |   |  G13 |   |   |   | 
+ L3B Power |   |   |  PYG2_L3B_EN |   |   | 
+ Speaker |   |   |   |  PYG3_SPK_Pulse |   | 
+ IMU INT |   |   |   |   |  PYG4_IMU_INT | 
+Audio
+ ESP32‑S3 |  G18 |  G14 |  G17 |  G15 |  G16 |  G48 |  G47 | 
+ES8311 (0x18) |  MCLK |  DOUT |  BCLK |  LRCK |  DIN |  SCL |  SDA | 
+Button
+ ESP32‑S3 |  G11 |  G12 | 
+KEY1 |  Input |   | 
+ KEY2 |   |  Input | 
+IR
+ ESP32‑S3 |  G46 |  G42 | 
+IR |  IR_TX |  IR_RX | 
+HY2.0-4P
+ PORT.A
+ HY2.0-4P |  Black |  Red |  Yellow |  White | 
+PORT.CUSTOM |  GND |  5V |  G9 |  G10 | 
+Hat2-Bus
+ PIN |  LEFT |  RIGHT |  PIN | 
+GND |  1 |  2 |  G5 | 
+ EXT_5V |  3 |  4 |  G4 | 
+ Boot |  5 |  6 |  G6 | 
+ G1 |  7 |  8 |  G7 | 
+ G8 |  9 |  10 |  G43 | 
+ BAT |  11 |  12 |  G44 | 
+ 3V3_L2 |  13 |  14 |  G2 | 
+ 5V_IN |  15 |  16 |  G3 | 
+Model Size
+ StickS3 Model Size PDF
+  Structure
+ StickS3 Structure Files
+       Datasheets
+ ESP32S3
+ ES8311
+ BMI270
+ Softwares
+ Quick Start
+ StickS3 ESP-Claw Firmware Flashing
+ StickS3 AIFlow Quick Start
+ Arduino
+ StickS3 Arduino Quick Start
+ StickS3 M5PM1 Power Management
+ M5PM1 Arduino Library
+ StickS3 Arduino M5Unified Driver Library
+ StickS3 Arduino M5GFX Driver Library
+ UiFlow2
+ StickS3 UiFlow2 Quick Start
+ StickS3 UiFlow2 Docs
+ Protocol
+ M5PM1 Power Management Chip
+ Other
+ StickS3 Xiaozhi Voice Assistant
+ PlatformIO
+ [env:m5stack-sticks3]
+platform = espressif32@6.12.0
+board = esp32-s3-devkitc-1
+framework = arduino
+board_build.arduino.partitions = default_8MB.csv
+board_build.arduino.memory_type = qio_opi
+build_flags =
+    -DESP32S3
+    -DBOARD_HAS_PSRAM
+    -mfix-esp32-psram-cache-issue
+    -DCORE_DEBUG_LEVEL=5
+    -DARDUINO_USB_CDC_ON_BOOT=1
+    -DARDUINO_USB_MODE=1
+lib_deps =
+    M5Unified=https://github.com/m5stack/M5Unified
+    M5PM1=https://github.com/m5stack/M5PM1 [env:m5stack-sticks3]
+platform = espressif32@6.12.0
+board = esp32-s3-devkitc-1
+framework = arduino
+board_build.arduino.partitions = default_8MB.csv
+board_build.arduino.memory_type = qio_opi
+build_flags =
+    -DESP32S3
+    -DBOARD_HAS_PSRAM
+    -mfix-esp32-psram-cache-issue
+    -DCORE_DEBUG_LEVEL=5
+    -DARDUINO_USB_CDC_ON_BOOT=1
+    -DARDUINO_USB_MODE=1
+lib_deps =
+    M5Unified=https://github.com/m5stack/M5Unified
+    M5PM1=https://github.com/m5stack/M5PM1  Video
+  Product Comparison
+ If you need to compare information for Stick series products, you can visit the Product Selector, select the target products, and obtain the comparison results. The selector covers key information such as core parameters and functional features, and supports simultaneous comparison of multiple products.
+    Page Tools  PDF  Copy page   
+        About Us
+        About M5Stack
+News
+Blog
+Events
+Contact Us
+        Where to buy
+        Distributors
+Official Store
+AliExpress
+Amazon
+Taobao
+        Solution
+        For Business
+For Developers
+        Software
+        UiFlow1
+UiFlow2
+M5Burner
+Block Designer
+EzData 2.0
+EasyLoader Packer
+VLW Font Creator
+Device USB Driver
+        Documentation
+        Product Documents
+UiFlow1
+UiFlow2
+Arduino
+ESP-IDF
+Linux & Edge AI
+StackFlow AI
+Home Assistant
+nanoFramework
+Product Guides
+Product Certifications
+I2C Table
+Product Selector
+Hardware Design Files
+Release History
+Stack Compatibility
+Stack Screw Length
+              Stay in the Loop
+              Weekly updates on new products, innovations, and announcements.
+                Subscribe
+              Email is invalid!
+            Thanks for subscribing
+            M5Stack Technology Co., Ltd
+            Address: 
+             Block A10, Expo Bay South Coast, Fuhai Street, Bao'an District, Shenzhen, China
+            TEL: 
+            +86 755 8657 5379
+            Email: 
+            support@m5stack.com
+        Copyright ©
+        M5Stack Technology Co., Ltd.
+        All rights reserved.
+        Privacy Policy| Terms of Service| Shipping Policy| Refund Policy| Payment Method 粤ICP备16010631号       

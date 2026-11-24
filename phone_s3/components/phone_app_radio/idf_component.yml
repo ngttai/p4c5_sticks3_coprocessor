@@ -1,0 +1,10 @@
+dependencies:
+  # Internet radio (HLS) through GMF, as in MetalioClaw4. Versions chosen to keep esp_audio_codec 2.6.x and
+  # esp_codec_dev 1.5.x of the other apps: gmf_io 1.0.1 and later want esp_codec_dev 2.0 beta (see PLAN_RADIO.md)
+  espressif/esp_audio_simple_player: "==1.0.0~1"
+  espressif/gmf_core: "~1.1.0"
+  espressif/gmf_audio: "~1.1.0"
+  espressif/gmf_io: "==1.0.0"
+  espressif/esp_hls_stream: "~1.0.4"
+  espressif/gmf_fft: "~1.1.0"
+  espressif/media_lib_sal: "~1.0.2"        # media_lib_add_default_adapter() (sockets, TLS of the HLS reader)

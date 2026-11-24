@@ -1,0 +1,9 @@
+menu "Phone example"
+    config PHONE_SD_CARD_MOUNT
+        bool "Mount the microSD card at boot"
+        default y
+        help
+            Mounts the card at the BSP mount point (/sdcard by default) in a background task.
+            A card that cannot be mounted is reported as missing; it is never formatted.
+            The slot has no card detect pin, so a card inserted later needs a restart.
+endmenu

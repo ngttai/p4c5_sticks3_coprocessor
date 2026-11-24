@@ -1,0 +1,15 @@
+## IDF Component Manager Manifest File
+dependencies:
+  idf: ">=6.1"
+
+  # Board support package: local copy of ngttai/esp32p4c5_bsp (WiFi through S3 over SPI, esp_hosted 3.1).
+  esp32p4c5_bsp:
+    version: "*"
+    override_path: "../components/esp32p4c5_bsp"
+
+  brookesia_core:
+    version: "*"
+    override_path: "../components/brookesia_core"
+
+
+
