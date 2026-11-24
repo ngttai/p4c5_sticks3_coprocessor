@@ -1,22 +1,22 @@
 # host_p4
 
-Tiếng Việt | [English](README.en.md)
+English | [Tiếng Việt](README.vi.md)
 
-Firmware thử trên KSDIY P4C5 (ESP32-P4): host esp_hosted 3.1.0 qua SPI tới StickS3, console `iperf` và hai lệnh kiểm tra link I2S. Dùng để kiểm dây và đo trước khi chạy `../phone_s3`.
-Dựng từ example `wifi/iperf` host; README gốc: [README_upstream.md](README_upstream.md). Khác example: bỏ `esp-extconn` (nó điều khiển C5 qua SDIO) và kéo GPIO54 (EN của C5) xuống thấp.
+Test firmware for the KSDIY P4C5 (ESP32-P4): esp_hosted 3.1.0 host over SPI to the StickS3, an `iperf` console and two commands to check the I2S link. Use it to check the wiring and measure before running `../phone_s3`.
+Built from the esp_hosted `wifi/iperf` host example; its original README is [README_upstream.md](README_upstream.md). Differences from the example: `esp-extconn` is removed (it drives the C5 over SDIO) and GPIO54 (the C5's EN) is pulled low.
 
-## Lệnh console (USB-Serial/JTAG)
-| Lệnh | Việc |
+## Console commands (USB-Serial/JTAG)
+| Command | Purpose |
 | --- | --- |
-| `sta_connect "<ssid>" <mật khẩu>` | Nối WiFi 2,4 GHz |
-| `iperf -s -i 10 -t 60` / `iperf -c <ip PC> -i 10 -t 60` | Đo TCP RX / TX (PC chạy nguồn hoặc sink, xem `../tools/`) |
-| `linktest [giây] [tone]` | Đếm khung I2S, báo lỗi bộ đếm và timeout; `tone` gửi tone 1 kHz xuống S3 |
-| `linklat [n]` | Đo độ trễ link bằng xung click |
+| `sta_connect "<ssid>" <password>` | Join a 2.4 GHz WiFi network |
+| `iperf -s -i 10 -t 60` / `iperf -c <PC ip> -i 10 -t 60` | Measure TCP RX / TX (the PC runs the source or sink, see `../tools/`) |
+| `linktest [seconds] [tone]` | Count I2S frames and report counter errors and timeouts; `tone` sends a 1 kHz tone to the S3 |
+| `linklat [n]` | Measure link latency with a click pulse |
 
-Xung SPI: `CONFIG_ESP_HOSTED_HOST_SPI_CLK_MHZ` trong `sdkconfig.defaults` (10, 20, 26 hoặc 40; 26 ổn định nhất).
+SPI clock: `CONFIG_ESP_HOSTED_HOST_SPI_CLK_MHZ` in `sdkconfig.defaults` (10, 20, 26 or 40; 26 is the most stable).
 
 ## Build
 ```bash
 source ~/.espressif/tools/activate_idf_v6.1.sh
-idf.py set-target esp32p4 && idf.py build && idf.py -p <cổng P4> flash
+idf.py set-target esp32p4 && idf.py build && idf.py -p <P4 port> flash
 ```

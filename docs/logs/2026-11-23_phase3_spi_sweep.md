@@ -1,16 +1,18 @@
-# Giai đoạn 3: quét xung SPI (hosted SPI full-duplex, StickS3 làm co-processor)
+# Phase 3: SPI clock sweep (hosted SPI full-duplex, StickS3 as co-processor)
 
-Ngày 2026-11-23. IDF 6.1, esp_hosted 3.1.0 (host và cp khớp), S3 240 MHz, checksum bật, dây jumper ngắn.
-Phía PC: Python TCP source/sink (không cài iperf), PC nối WiFi 5 GHz cùng mạng 192.168.1.0/24, AP 2,4 GHz cho S3.
-P4 chạy `iperf -c` / `iperf -s` (iperf của IDF), 10 giây, TCP, 1 lần đo mỗi mức. Kết quả trung bình P4 báo cáo.
+English | [Tiếng Việt](vi/2026-11-23_phase3_spi_sweep.md)
 
-| SPI (MHz) | TCP TX P4->PC (Mbps) | TCP RX PC->P4 (Mbps) | Ghi chú |
+Date 2026-11-23. IDF 6.1, esp_hosted 3.1.0 (host and cp matched), S3 at 240 MHz, checksum on, short jumper wires.
+PC side: Python TCP source/sink (iperf was not installed), PC on 5 GHz WiFi in the same 192.168.1.0/24 network, 2.4 GHz AP for the S3.
+The P4 ran `iperf -c` / `iperf -s` (the IDF iperf), 10 seconds, TCP, one run per level. The result is the average reported by the P4.
+
+| SPI (MHz) | TCP TX P4->PC (Mbps) | TCP RX PC->P4 (Mbps) | Note |
 | --- | --- | --- | --- |
-| 10 | 7,4 | 7,2 (ổn định) | |
-| 20 | 12,6 | 8,5 đến 10,8 | |
-| 26 | 12,9 | 11,6 (ổn định 14) | tốt nhất, ổn định |
-| 40 | 8,2 | 8,3 | dao động mạnh (2 đến 14), không ổn định |
+| 10 | 7.4 | 7.2 (stable) | |
+| 20 | 12.6 | 8.5 to 10.8 | |
+| 26 | 12.9 | 11.6 (stable at 14) | best and stable |
+| 40 | 8.2 | 8.3 | swings widely (2 to 14), not stable |
 
-Chưa đo: UDP, 60 giây, 10 phút, so với iperf chạy thẳng trên S3, CPU S3 và RAM nội.
-Phía PC cũng là WiFi nên có thể là điểm nghẽn, cần xác nhận bằng PC cắm dây.
-Lỗi đã gặp và sửa: `pserial_task` tràn stack trên S3 khi `sta_connect` (stack 4096 -> 8192).
+Not measured: UDP, 60 seconds, 10 minutes, comparison with iperf running directly on the S3, S3 CPU and internal RAM.
+The PC side is also on WiFi, so it may be the bottleneck; this needs confirming with a wired PC.
+Problem found and fixed: `pserial_task` overflowed its stack on the S3 during `sta_connect` (stack 4096 -> 8192).

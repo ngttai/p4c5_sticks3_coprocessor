@@ -1,12 +1,12 @@
 # afe_s3
 
-Tiếng Việt | [English](README.en.md)
+English | [Tiếng Việt](README.vi.md)
 
-Bộ thử AFE độc lập trên StickS3 (không có WiFi và link I2S), dùng để chọn cấu hình AFE ở giai đoạn 4. Kết quả: [../docs/logs/2026-11-23_phase4_afe_standalone.md](../docs/logs/2026-11-23_phase4_afe_standalone.md).
+A standalone AFE test on the StickS3 (no WiFi, no I2S link), used to choose the AFE configuration in phase 4. Results: [../docs/logs/2026-11-23_phase4_afe_standalone.md](../docs/logs/2026-11-23_phase4_afe_standalone.md).
 
-Chọn bài thử bằng `TEST_MODE` trong `main/main.c`:
-- `1`: tone 1 kHz, lần lượt SR LOW, FD LOW, FD HIGH, VC LOW và đối chứng không AEC.
-- `2`: giọng tổng hợp (flite) lặp lại, cùng năm cấu hình đó.
-- `3`: double-talk. Mỗi vòng chờ nhấn KEY1, vòng 20 s: bip ba lần, loa phát giọng từ giây 3, bip đơn giây 8 là bắt đầu nói, bip đơn giây 15 là dừng; in `ALL DONE` khi xong. Ghi log bằng `../tools/cap_dt.py`.
+Select the test with `TEST_MODE` in `main/main.c`:
+- `1`: 1 kHz tone, cycling through SR LOW, FD LOW, FD HIGH, VC LOW and a no-AEC control.
+- `2`: repeated synthetic speech (flite), same five configurations.
+- `3`: double-talk. Each round waits for KEY1 and lasts 20 s: three beeps, far-end speech from second 3, a single beep at second 8 means start talking, another at second 15 means stop; `ALL DONE` is printed at the end. Log it with `../tools/cap_dt.py`.
 
-Build: `idf.py set-target esp32s3 && idf.py build && idf.py -p <cổng S3> flash`.
+Build: `idf.py set-target esp32s3 && idf.py build && idf.py -p <S3 port> flash`.

@@ -1,51 +1,51 @@
-# Giao thức link I2S giữa S3 và P4
+# I2S link protocol between the S3 and the P4
 
-Tiếng Việt | [English](en/I2S_LINK.md)
+English | [Tiếng Việt](vi/I2S_LINK.md)
 
-Cài ở `cp_s3/main/audio_fe.c` (phía S3) và `phone_s3/components/esp32p4c5_bsp/src/esp32p4c5_audio.c` (phía P4). Bản thử độc lập ở `host_p4/main/link_test.c`.
+Implemented in `cp_s3/main/audio_fe.c` (S3 side) and `phone_s3/components/esp32p4c5_bsp/src/esp32p4c5_audio.c` (P4 side). A standalone test build is `host_p4/main/link_test.c`.
 
-## Định dạng
+## Format
 
-- **Master:** S3, I2S1, cấp BCLK (G43) và WS (G44). **Slave:** P4, I2S0.
-- 16 kHz, 16 bit, Philips, stereo (hai kênh L và R trong mỗi khung).
-- Khối 128 khung (8 ms), DMA 4 mô tả (khoảng 32 ms). Độ trễ vòng điện: 79 ms (đo ở chế độ echo).
+- **Master:** S3, I2S1, providing BCLK (G43) and WS (G44). **Slave:** P4, I2S0.
+- 16 kHz, 16 bit, Philips, stereo (two channels, L and R, in every frame).
+- Chunk of 128 frames (8 ms), DMA of 4 descriptors (about 32 ms). Electrical round-trip latency: 79 ms (measured in echo mode).
 
-| Hướng | Kênh L | Kênh R |
+| Direction | L channel | R channel |
 | --- | --- | --- |
-| S3 → P4 (chân G4 → GPIO48) | Mic sau AFE (AEC, NS) | Bộ đếm 16 bit, tăng 1 mỗi khung |
-| P4 → S3 (chân GPIO49 → G3) | Playback mono 16 kHz | Magic `0xA55A` khi có dữ liệu playback, `0` khi không |
+| S3 to P4 (pin G4 to GPIO48) | Microphone after the AFE (AEC, NS) | 16-bit counter, +1 every frame |
+| P4 to S3 (pin GPIO49 to G3) | Mono 16 kHz playback | Magic `0xA55A` when there is playback data, `0` otherwise |
 
-## Quy tắc
+## Rules
 
-1. **Bộ đếm:** P4 so bộ đếm của mỗi khung với giá trị kỳ vọng. Lệch thì tăng `ctr_err` (hiện ở trang Giới thiệu của phone). Một lỗi lúc bắt đầu là bình thường.
-2. **Magic:** S3 coi chunk là hợp lệ khi quá 3/4 khung có `0xA55A` ở kênh R. Chunk không hợp lệ bị thay bằng im lặng. Quy tắc này chặn tạp âm khi chân G3 hở hoặc P4 chưa chạy.
-3. **Ampli:** S3 bật ampli AW8737 (qua PMIC) khi chunk hợp lệ và đỉnh lớn hơn 30; tắt sau 2 giây không có tín hiệu.
-4. **Bộ đệm mic ở P4:** `link_task` chỉ ghi vào stream buffer mic khi còn chỗ cho **nguyên một khối** 256 byte. Stream buffer FreeRTOS chấp nhận ghi dở khi gần đầy; số byte lẻ làm mọi mẫu sau lệch một byte (nhiễu toàn thang, mẫu là bội số của 256). Nếu đầy thì bỏ cả khối và tăng `mic_overrun`.
-5. **Mở và đóng:** mở thiết bị (`d_enable`) reset stream buffer tương ứng. Đóng loa chờ hàng đợi rỗng tối đa 1 giây rồi thêm 80 ms, để tiếng bíp ngắn không bị cắt.
+1. **Counter:** the P4 compares each frame's counter with the expected value. A mismatch increments `ctr_err` (shown on the phone's About page). One error at start-up is normal.
+2. **Magic:** the S3 treats a chunk as valid when more than 3/4 of its frames carry `0xA55A` in the R channel. An invalid chunk is replaced with silence. This stops noise when pin G3 is floating or the P4 is not running yet.
+3. **Amplifier:** the S3 switches the AW8737 amplifier on (through the PMIC) when a chunk is valid and its peak is above 30; it switches it off after 2 seconds without signal.
+4. **Microphone buffer on the P4:** `link_task` writes to the microphone stream buffer only when there is room for a **whole** 256-byte block. A FreeRTOS stream buffer accepts a partial write when nearly full; an odd number of bytes shifts every later sample by one byte (full-scale noise, samples that are multiples of 256). If full, the whole block is dropped and `mic_overrun` is incremented.
+5. **Open and close:** opening a device (`d_enable`) resets its stream buffer. Closing the speaker waits up to 1 second for the queue to drain, then 80 ms more, so a short beep is not cut off.
 
-## Phía P4
+## P4 side
 
-- Codec ảo: `bsp_audio_codec_speaker_init()` nhận mono 16 bit ở tần số bất kỳ. Bộ hạ mẫu `esp_ae_rate_cvt` đưa về 16 kHz; bộ đệm đầu ra phải đủ cho `esp_ae_rate_cvt_get_max_out_sample_num`.
-- Volume: software, qua esp_codec_dev. Đường cong đặt trong `bsp_audio_codec_speaker_init()`: −24 dB ở 1% đến −8 dB ở 100% (0 là tắt tiếng).
-- `link_task` ưu tiên 18, đặt trên core 1, stack ở PSRAM, log mỗi 5 giây (`frames`, `ctr_err`, `play_underrun`, `mic_overrun`, `spk`, `mic`, `play_q`).
+- Virtual codec: `bsp_audio_codec_speaker_init()` accepts mono 16-bit audio at any rate. The `esp_ae_rate_cvt` resampler converts it to 16 kHz; its output buffer must be large enough for `esp_ae_rate_cvt_get_max_out_sample_num`.
+- Volume: software, through esp_codec_dev. The curve is set in `bsp_audio_codec_speaker_init()`: −24 dB at 1% to −8 dB at 100% (0 is mute).
+- `link_task` has priority 18, runs on core 1 with its stack in PSRAM, and logs every 5 seconds (`frames`, `ctr_err`, `play_underrun`, `mic_overrun`, `spk`, `mic`, `play_q`).
 
-## Phía S3
+## S3 side
 
-- `link_task` (core 0, ưu tiên 10): đọc và ghi khối 128 khung; đẩy playback vào `rxq`, lấy mic sạch từ `txq`.
-- `codec_task` (core 1): ghi playback ra ES8311, đọc mic và ref (kênh R loopback DAC), feed AFE (`"MR"`).
-- `fetch_task` (core 1): lấy ngõ ra AFE đẩy vào `txq`.
-- Mức cố định của ES8311 là 100; mic gain 24 dB.
+- `link_task` (core 0, priority 10): reads and writes 128-frame chunks; pushes playback into `rxq` and takes clean microphone audio from `txq`.
+- `codec_task` (core 1): writes playback to the ES8311, reads the microphone and the reference (R channel of the DAC loopback), and feeds the AFE (`"MR"`).
+- `fetch_task` (core 1): takes the AFE output into `txq`.
+- ES8311 fixed level is 100; microphone gain is 24 dB.
 
-## Lỗi hay gặp
+## Link test commands (host_p4)
 
-| Triệu chứng | Nguyên nhân thường gặp |
+- `linktest [seconds] [tone]`: the P4 acts as slave and counts frames, printing the L-channel RMS and peak and the counter errors every second; it ends with `LINKTEST RESULT`. `tone` sends a 1 kHz tone to the S3.
+- `linklat [n]`: sends a click pulse and measures how long it takes to come back. The electrical measurement needs `cp_s3` built with `AUDIO_FE_LINK_ECHO`; measuring through the speaker and microphone does not work because the microphone floor is noisy (see the phase 5 log).
+
+## Common failures
+
+| Symptom | Usual cause |
 | --- | --- |
-| Loa phát tạp âm hoặc im | Chân G3 hở (không có magic), hoặc ampli chưa bật (đỉnh không quá 30) |
-| Mic nhiễu toàn thang sau wake word | Bộ đệm mic ghi dở byte lẻ (đã sửa ở phiên bản này) |
-| `ctr_err` tăng liên tục | P4 và S3 lệch khung (reset một bên), hoặc dây I2S dài, nhiễu |
-| `play_underrun` tăng | P4 bận, không kịp đẩy playback |
-
-## Lệnh thử link (host_p4)
-
-- `linktest [giây] [tone]`: P4 làm slave, đếm khung, in mỗi giây RMS và đỉnh của kênh L, số lỗi bộ đếm; cuối bài in `LINKTEST RESULT`. `tone` gửi tone 1 kHz xuống S3.
-- `linklat [n]`: gửi xung click và đo thời gian nhận lại. Đo điện cần `cp_s3` bật `AUDIO_FE_LINK_ECHO`; đo qua loa và mic không dùng được vì nền mic ồn (xem log phase 5).
+| Speaker plays noise or stays silent | Pin G3 floating (no magic), or the amplifier never turned on (peak not above 30) |
+| Full-scale microphone noise after the wake word | The microphone buffer wrote a partial odd number of bytes (fixed in this version) |
+| `ctr_err` keeps increasing | P4 and S3 out of frame sync (one side reset), or long or noisy I2S wires |
+| `play_underrun` increases | The P4 is busy and cannot push playback in time |

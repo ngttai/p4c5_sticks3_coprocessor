@@ -1,71 +1,71 @@
-# KSDIY P4C5 + StickS3: dùng ESP32-S3 làm bộ WiFi và xử lý mic cho ESP32-P4
+# KSDIY P4C5 + StickS3: an ESP32-S3 as WiFi and microphone co-processor for the ESP32-P4
 
-Tiếng Việt | [English](README.en.md)
+English | [Tiếng Việt](README.vi.md)
 
-> Tên `p4c5_sticks3_coprocessor` = board **KSDIY ESP32-P4C5** (P4C5) dùng **M5StickS3** (chip ESP32-S3) làm co-processor.
+> `p4c5_sticks3_coprocessor` = the **KSDIY ESP32-P4C5** board (P4C5) using an **M5StickS3** (ESP32-S3 chip) as its co-processor.
 
-## Đây là gì
+## What this is
 
-Board KSDIY P4C5 có ESP32-P4 (chạy giao diện và ứng dụng) và một ESP32-C5 làm WiFi qua SDIO. Dự án này **thay C5 bằng một M5StickS3** (ESP32-S3) nối ngoài bằng dây, để thử xem S3 có làm thay được hai việc:
+The KSDIY P4C5 board has an ESP32-P4 (runs the UI and apps) and an ESP32-C5 that provides WiFi over SDIO. This project **replaces the C5 with an external M5StickS3** (ESP32-S3), wired to the board, to find out whether the S3 can take over two jobs:
 
-1. **WiFi cho P4:** S3 làm co-processor WiFi 2,4 GHz, nối P4 qua SPI bằng ESP-Hosted 3.1.0.
-2. **Xử lý mic và loa:** S3 chạy AFE (khử tiếng vọng AEC, khử nhiễu, VAD) trên mic của StickS3 rồi gửi tiếng sạch sang P4 qua I2S; loa của StickS3 phát âm thanh do P4 gửi sang.
+1. **WiFi for the P4:** the S3 acts as a 2.4 GHz WiFi co-processor, connected to the P4 over SPI with ESP-Hosted 3.1.0.
+2. **Microphone and speaker processing:** the S3 runs the AFE (acoustic echo cancellation, noise suppression, VAD) on the StickS3 microphone and sends the clean audio to the P4 over I2S; the StickS3 speaker plays the audio the P4 sends back.
 
-Kết quả: làm được (WiFi khoảng 10 đến 13 Mbps, AEC tốt, link I2S ổn định 1 giờ), nhưng mất BLE, WiFi 5 GHz và chất lượng nhạc. Chi tiết: [docs/RESULTS.md](docs/RESULTS.md).
+Result: it works (WiFi about 10 to 13 Mbps, good AEC, I2S link stable for one hour), at the cost of BLE, 5 GHz WiFi and music quality. Details: [docs/RESULTS.md](docs/RESULTS.md).
 
 ```mermaid
 flowchart LR
-    P4["KSDIY P4C5<br/>ESP32-P4<br/>giao diện, app, wake word"]
-    S3["M5StickS3<br/>ESP32-S3<br/>WiFi + AEC + mic + loa"]
-    AP["Router WiFi"]
+    P4["KSDIY P4C5<br/>ESP32-P4<br/>UI, apps, wake word"]
+    S3["M5StickS3<br/>ESP32-S3<br/>WiFi + AEC + mic + speaker"]
+    AP["WiFi router"]
     P4 <-->|"SPI: WiFi (ESP-Hosted)"| S3
-    P4 <-->|"I2S 16 kHz: mic sạch và loa"| S3
+    P4 <-->|"I2S 16 kHz: clean mic and speaker"| S3
     S3 <--> AP
 ```
 
-Repo gồm firmware cho cả hai chip, một bản phone chạy thử trên cấu hình này, tài liệu nghiên cứu và script đo.
+The repository contains firmware for both chips, a phone app build that runs on this setup, the research documents and the measurement scripts.
 
-## Cần gì để chạy lại
+## What you need to reproduce it
 
-- 1 board KSDIY P4C5 và 1 M5StickS3, nối bằng 11 dây và GND ([sơ đồ đấu dây](docs/WIRING.md)).
-- ESP-IDF 6.1, PC cùng mạng WiFi 2,4 GHz.
+- One KSDIY P4C5 board and one M5StickS3, joined by 11 wires plus GND ([wiring diagram](docs/WIRING.md)).
+- ESP-IDF 6.1 and a PC on the same 2.4 GHz WiFi network.
 
-## Cấu trúc
+## Layout
 
-| Thư mục | Nội dung |
+| Folder | Contents |
 | --- | --- |
-| `cp_s3/` | Firmware S3: esp_hosted co-processor + `audio_fe` (ES8311, AFE FD HIGH, link I2S) |
-| `host_p4/` | Firmware thử trên P4: iperf qua hosted, lệnh `linktest` và `linklat` cho link I2S |
-| `afe_s3/` | AFE độc lập trên StickS3 (tone, giọng TTS, double-talk) dùng để chọn cấu hình AFE |
-| `phone_s3/` | Phone (Brookesia, LVGL) bản tinh giản: Cài đặt (WiFi, test mạng, âm lượng), Nhạc, Radio, Trợ lý |
-| `hw_specs/` | `hw_matrix.md` của P4C5, schematic và pin map StickS3 |
-| `tools/` | Script đo trên PC (soak, throughput, link, độ trễ) |
-| `docs/` | Kết quả, kiến trúc, sơ đồ đấu dây, giao thức link, hướng dẫn port, log đo |
+| `cp_s3/` | S3 firmware: esp_hosted co-processor + `audio_fe` (ES8311, AFE FD HIGH, I2S link) |
+| `host_p4/` | Test firmware for the P4: iperf over hosted, `linktest` and `linklat` commands for the I2S link |
+| `afe_s3/` | Standalone AFE test on the StickS3 (tone, TTS speech, double-talk), used to pick the AFE configuration |
+| `phone_s3/` | Slimmed-down phone (Brookesia, LVGL): Settings (WiFi, network test, volume), Music, Radio, Assistant |
+| `hw_specs/` | P4C5 `hw_matrix.md`, StickS3 schematic and pin map |
+| `tools/` | PC measurement scripts (soak, throughput, link, latency) |
+| `docs/` | Results, architecture, wiring, link protocol, porting guide, measurement logs |
 
-## Đọc theo thứ tự
+## Reading order
 
-1. [docs/RESULTS.md](docs/RESULTS.md): được gì, mất gì, hạn chế, chưa làm.
-2. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): sơ đồ khối và luồng dữ liệu.
-3. [docs/WIRING.md](docs/WIRING.md): sơ đồ và bảng đấu dây.
-4. [docs/I2S_LINK.md](docs/I2S_LINK.md): giao thức link I2S.
-5. [docs/PORTING.md](docs/PORTING.md): port sang board P4 khác.
-6. [docs/logs/](docs/logs/): số đo từng giai đoạn; script tạo ra chúng ở [tools/](tools/).
+1. [docs/RESULTS.md](docs/RESULTS.md): what was gained, lost, the limits, what is not done.
+2. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): block diagram and data flow.
+3. [docs/WIRING.md](docs/WIRING.md): wiring diagram and table.
+4. [docs/I2S_LINK.md](docs/I2S_LINK.md): the I2S link protocol.
+5. [docs/PORTING.md](docs/PORTING.md): porting to another P4 board.
+6. [docs/logs/](docs/logs/): per-phase measurements; the scripts that produced them are in [tools/](tools/).
 
 ## Build
 
-Dùng ESP-IDF 6.1. Mỗi project là một ESP-IDF project độc lập:
+ESP-IDF 6.1. Each folder is an independent ESP-IDF project:
 
 ```bash
 source ~/.espressif/tools/activate_idf_v6.1.sh
 cd cp_s3    && idf.py set-target esp32s3 && idf.py build   # S3
-cd host_p4  && idf.py set-target esp32p4 && idf.py build   # P4, bản thử
-cd phone_s3 && idf.py set-target esp32p4 && idf.py build   # P4, bản phone
+cd host_p4  && idf.py set-target esp32p4 && idf.py build   # P4, test build
+cd phone_s3 && idf.py set-target esp32p4 && idf.py build   # P4, phone build
 ```
 
-`sdkconfig` được sinh từ `sdkconfig.defaults*` và không nằm trong git. Nạp: `idf.py -p <cổng> flash` (S3 và P4 là hai cổng USB-Serial/JTAG khác nhau; nạp hoặc monitor có thể reset board).
+`sdkconfig` is generated from `sdkconfig.defaults*` and is not in git. Flash with `idf.py -p <port> flash` (the S3 and the P4 are two different USB-Serial/JTAG ports; flashing or monitoring can reset a board).
 
-## Ghi chú
+## Notes
 
-- Cần esp_hosted 3.1.0 cho cả hai phía; không dùng chung với slave C5 stock (2.12.13).
-- `phone_s3` có BSP cục bộ `components/esp32p4c5_bsp`, khác bản GitHub gốc ở WiFi (SPI tới S3) và âm thanh (link I2S).
-- Bản đầy đủ của phone (trước khi tinh giản và gỡ 4G) không nằm trong repo này.
+- esp_hosted 3.1.0 is required on both sides; it is not compatible with the stock C5 slave (2.12.13).
+- `phone_s3` has a local BSP, `components/esp32p4c5_bsp`, which differs from the original GitHub BSP in WiFi (SPI to the S3) and audio (I2S link).
+- The full phone (before slimming down and removing 4G) is not in this repository.
