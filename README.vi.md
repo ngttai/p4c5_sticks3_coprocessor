@@ -69,3 +69,7 @@ cd phone_s3 && idf.py set-target esp32p4 && idf.py build   # P4, bản phone
 - Cần esp_hosted 3.1.0 cho cả hai phía; không dùng chung với slave C5 stock (2.12.13).
 - `phone_s3` có BSP cục bộ `components/esp32p4c5_bsp`, khác bản GitHub gốc ở WiFi (SPI tới S3) và âm thanh (link I2S).
 - Bản đầy đủ của phone (trước khi tinh giản và gỡ 4G) không nằm trong repo này.
+
+## Giấy phép
+
+Apache License 2.0, xem [LICENSE](LICENSE). `phone_s3/` dẫn xuất từ firmware phone của KSDIY và giữ `LICENSE` riêng; các thành phần bên thứ ba trong `phone_s3/components/` (ví dụ `brookesia_core`, `esp_xiaozhi`) giữ giấy phép của chúng.
